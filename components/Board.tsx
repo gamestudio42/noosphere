@@ -68,6 +68,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       hybridsBorn: 0,
       doubtsBanished: 0,
       doubtsDissolved: 0,
+      planted: 0,
+      splits: 0,
       unlocked: new Set<string>(),
       lastStatsAt: 0,
       extinct: false,
@@ -126,6 +128,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
                   hybridsBorn: session.hybridsBorn,
                   doubtsBanished: session.doubtsBanished,
                   doubtsDissolved: session.doubtsDissolved,
+                  planted: session.planted,
+                  splits: session.splits,
                   unlocked: [...session.unlocked],
               },
           });
@@ -172,7 +176,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           if (n.blend.length > 1) hybridsAlive++;
       }
       session.peakAlive = Math.max(session.peakAlive, nodes.length);
-      session.largestNetwork = Math.max(session.largestNetwork, largestNetwork(nodes));
+      const network = largestNetwork(nodes);
+      session.largestNetwork = Math.max(session.largestNetwork, network);
 
       const stats: SessionStats = {
           startedAt: session.startedAt,
@@ -181,10 +186,13 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           hybridsAlive,
           peakAlive: session.peakAlive,
           maxGeneration: session.maxGeneration,
+          network,
           largestNetwork: session.largestNetwork,
           maxBlend: session.maxBlend,
           bonds: session.bonds,
           hybridsBorn: session.hybridsBorn,
+          planted: session.planted,
+          splits: session.splits,
           focus: focusRef.current,
           doubtsAlive: doubtsRef.current.length,
           doubtsBanished: session.doubtsBanished,
@@ -254,6 +262,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           (event) => {
               const now = Date.now();
               if (event.kind === 'synthesis') sessionRef.current.bonds++;
+              if (event.kind === 'split') sessionRef.current.splits++;
               if (event.kind === 'hybrid') {
                   sessionRef.current.hybridsBorn++;
                   // A new kind of idea: always celebrate it
@@ -400,6 +409,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           const newNode = createNode(cx, cy, archetype);
           newNode.energy = 70;
           nodesRef.current.push(newNode);
+          sessionRef.current.planted++;
           spawnParticles(cx, cy, '#fff', 15);
           playTone(archetype, 0.8);
       }

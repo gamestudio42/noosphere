@@ -7,6 +7,7 @@ import { formatDuration } from '../utils/stats';
 interface HudProps {
   stats: SessionStats | null;
   unlockedCount: number;
+  objectives?: React.ReactNode; // replaces the how-to hints in the campaign
 }
 
 const Stat: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -16,7 +17,7 @@ const Stat: React.FC<{ label: string; value: React.ReactNode }> = ({ label, valu
   </div>
 );
 
-export const Hud: React.FC<HudProps> = ({ stats, unlockedCount }) => {
+export const Hud: React.FC<HudProps> = ({ stats, unlockedCount, objectives }) => {
   return (
     <>
       <div className="absolute top-6 left-6 z-40 pointer-events-none">
@@ -26,7 +27,7 @@ export const Hud: React.FC<HudProps> = ({ stats, unlockedCount }) => {
               <Stat label="Ideas" value={stats.alive} />
               <Stat label="Hybrids" value={stats.hybridsAlive} />
               <Stat label="Generation" value={stats.maxGeneration} />
-              <Stat label="Largest web" value={stats.largestNetwork} />
+              <Stat label="Largest web" value={stats.network} />
               {stats.doubtsAlive > 0 && <Stat label="Doubts" value={<span className="text-violet-300">{stats.doubtsAlive}</span>} />}
               <Stat label="Mind age" value={formatDuration(stats.duration)} />
             </div>
@@ -34,11 +35,13 @@ export const Hud: React.FC<HudProps> = ({ stats, unlockedCount }) => {
       </div>
 
       <div className="absolute top-6 right-6 z-40 pointer-events-none text-right">
-          <p className="text-xs text-stone-500 max-w-[200px]">
-              Click to plant an idea.<br/>
-              Hover to pay attention.<br/>
-              Ideas die when forgotten.
-          </p>
+          {objectives ?? (
+            <p className="text-xs text-stone-500 max-w-[200px] ml-auto">
+                Click to plant an idea.<br/>
+                Hover to pay attention.<br/>
+                Ideas die when forgotten.
+            </p>
+          )}
           <p className="mt-3 text-[11px] uppercase tracking-widest text-stone-400">
               Insights {unlockedCount}/{INSIGHTS.length}
           </p>

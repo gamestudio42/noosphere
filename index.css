@@ -23,3 +23,9 @@ canvas {
   60% { translate: -4px 0; }
   80% { translate: 2px 0; }
 }
+
+@keyframes cardInOut {
+  0% { opacity: 0; transform: translateY(8px); }
+  15%, 75% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}

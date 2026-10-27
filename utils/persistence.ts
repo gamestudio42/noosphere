@@ -1,6 +1,7 @@
 
 import { Doubt, IdeaNode } from '../types';
 import { blendTraits, normalizeBlend } from './gameLogic';
+import { CampaignState } from '../campaign';
 
 const KEY = 'noosphere:mind:v1';
 
@@ -21,6 +22,8 @@ export interface SavedMind {
     hybridsBorn: number;
     doubtsBanished?: number;
     doubtsDissolved?: number;
+    planted?: number;
+    splits?: number;
     unlocked: string[];
   };
 }
@@ -65,3 +68,34 @@ export const loadMind = (): SavedMind | null => {
 };
 
 export const hasSavedMind = () => loadMind() !== null;
+
+const CAMPAIGN_KEY = 'noosphere:campaign:v1';
+
+export const saveCampaign = (state: CampaignState) => {
+  try {
+    localStorage.setItem(CAMPAIGN_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+};
+
+export const loadCampaign = (): CampaignState | null => {
+  try {
+    const raw = localStorage.getItem(CAMPAIGN_KEY);
+    if (!raw) return null;
+    const state = JSON.parse(raw) as CampaignState;
+    if (typeof state.chapter !== 'number') return null;
+    // Hold timers are measured in mind age, which doesn't survive a reload exactly
+    return { chapter: state.chapter, baseline: state.baseline ?? {}, done: state.done ?? [], holdSince: {} };
+  } catch {
+    return null;
+  }
+};
+
+export const clearCampaign = () => {
+  try {
+    localStorage.removeItem(CAMPAIGN_KEY);
+  } catch {
+    // ignore
+  }
+};

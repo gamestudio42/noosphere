@@ -8,9 +8,10 @@ interface ExtinctionScreenProps {
   stats: SessionStats;
   insights: Insight[];
   onRestart: () => void;
+  restartLabel?: string;
 }
 
-export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({ stats, insights, onRestart }) => {
+export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({ stats, insights, onRestart, restartLabel = 'Plant a new mind' }) => {
   const rows: [string, React.ReactNode][] = [
     ['Mind age', formatDuration(stats.duration)],
     ['Most ideas at once', stats.peakAlive],
@@ -58,7 +59,7 @@ export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({ stats, insig
           autoFocus
           className="px-8 py-3 rounded-full border border-white/30 hover:border-white/70 hover:bg-white/5 transition-colors text-sm font-bold uppercase tracking-[0.3em]"
         >
-          Plant a new mind
+          {restartLabel}
         </button>
       </div>
     </div>

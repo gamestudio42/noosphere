@@ -5,13 +5,14 @@ import { ARCHETYPES } from '../constants';
 
 interface ControlsProps {
   selectedArchetype: Archetype;
+  available: Archetype[];
   onSelect: (type: Archetype) => void;
 }
 
-export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, onSelect }) => {
+export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available, onSelect }) => {
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-black/40 backdrop-blur-md p-4 rounded-full border border-white/10 shadow-2xl">
-      {(Object.keys(ARCHETYPES) as Archetype[]).map((type) => {
+      {available.map((type) => {
           const info = ARCHETYPES[type];
           const isSelected = selectedArchetype === type;
           

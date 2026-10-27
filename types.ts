@@ -62,10 +62,13 @@ export interface SessionStats {
   hybridsAlive: number;
   peakAlive: number;
   maxGeneration: number;
-  largestNetwork: number;
+  network: number; // largest web right now
+  largestNetwork: number; // largest web ever
   maxBlend: number;
   bonds: number;
   hybridsBorn: number;
+  planted: number;
+  splits: number;
   focus: number; // 0..FOCUS.MAX
   doubtsAlive: number;
   doubtsBanished: number; // by the player

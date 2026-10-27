@@ -3,13 +3,26 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { Hud } from './components/Hud';
-import { InsightToasts } from './components/InsightToasts';
+import { InsightToasts, Toast } from './components/InsightToasts';
+import { Objectives } from './components/Objectives';
+import { ChapterCard } from './components/ChapterCard';
 import { ExtinctionScreen } from './components/ExtinctionScreen';
 import { MindTools } from './components/MindTools';
 import { FocusBar } from './components/FocusBar';
 import { exportCanvas } from './utils/renderer';
-import { hasSavedMind } from './utils/persistence';
-import { Archetype, GameRules, Insight, SessionStats } from './types';
+import { hasSavedMind, loadCampaign, saveCampaign } from './utils/persistence';
+import { playCue } from './utils/audio';
+import { Archetype, Insight, SessionStats } from './types';
+import {
+  CampaignState,
+  Chapter,
+  advanceCampaign,
+  currentChapter,
+  newCampaign,
+  restartChapter,
+  rulesFor,
+  unlockedArchetypes,
+} from './campaign';
 import { BrainCircuit } from 'lucide-react';
 
 const TOAST_MS = 4500;
@@ -21,25 +34,69 @@ const App: React.FC = () => {
   const [sessionKey, setSessionKey] = useState(0);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [unlocked, setUnlocked] = useState<Insight[]>([]);
-  const [toasts, setToasts] = useState<{ key: number; insight: Insight }[]>([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [extinct, setExtinct] = useState<SessionStats | null>(null);
   const [deniedAt, setDeniedAt] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rules: GameRules = { focus: true, doubts: true };
+  const [campaign, setCampaign] = useState<CampaignState>(() => loadCampaign() ?? newCampaign());
+  // Stats arrive from the loop; the ref lets the handler see the latest campaign
+  const campaignRef = useRef(campaign);
+  // Title card for the chapter that just began; undefined hides it, null ends the campaign
+  const [card, setCard] = useState<{ key: number; chapter: Chapter | null } | undefined>(undefined);
+
+  const rules = rulesFor(campaign);
+  const available = unlockedArchetypes(campaign);
+  const archetype = available.includes(selectedArchetype) ? selectedArchetype : available[0];
+
+  const updateCampaign = (next: CampaignState) => {
+      campaignRef.current = next;
+      setCampaign(next);
+      saveCampaign(next);
+  };
+
+  const pushToast = useCallback((toast: Omit<Toast, 'key'>) => {
+      const key = Date.now() + Math.random();
+      setToasts(prev => [...prev, { ...toast, key }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.key !== key)), TOAST_MS);
+  }, []);
+
+  const showCard = (chapter: Chapter | null) => setCard({ key: Date.now(), chapter });
+
+  const handleStats = (next: SessionStats) => {
+      setStats(next);
+      const update = advanceCampaign(campaignRef.current, next);
+      if (update.state === campaignRef.current) return;
+      updateCampaign(update.state);
+      for (const objective of update.completed) {
+          pushToast({ kind: 'objective', title: 'Objective complete', description: objective.label });
+      }
+      if (update.chapterCompleted) {
+          playCue('chapter');
+          const upcoming = currentChapter(update.state);
+          showCard(upcoming);
+          // Hand the player whatever the new chapter just unlocked
+          if (upcoming?.unlocks.length) setSelectedArchetype(upcoming.unlocks[0]);
+      }
+  };
 
   const handleInsight = useCallback((insight: Insight) => {
       setUnlocked(prev => [...prev, insight]);
-      const key = Date.now() + Math.random();
-      setToasts(prev => [...prev, { key, insight }]);
-      setTimeout(() => setToasts(prev => prev.filter(t => t.key !== key)), TOAST_MS);
-  }, []);
+      pushToast({ kind: 'insight', title: insight.title, description: insight.description });
+  }, [pushToast]);
 
   const restart = () => {
       setExtinct(null);
       setStats(null);
       setUnlocked([]);
       setToasts([]);
+      updateCampaign(restartChapter(campaignRef.current));
       setSessionKey(k => k + 1);
+  };
+
+  const start = () => {
+      setStarted(true);
+      // Fresh campaigns and returning players both get the current chapter's card
+      showCard(currentChapter(campaignRef.current));
   };
 
   if (!started) {
@@ -64,7 +121,7 @@ const App: React.FC = () => {
                  </p>
 
                  <button
-                    onClick={() => setStarted(true)}
+                    onClick={start}
                     className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-white/60 transition-colors"
                  >
                      <div className="absolute inset-0 w-full h-full bg-white/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
@@ -79,15 +136,15 @@ const App: React.FC = () => {
     <div className="relative min-h-screen bg-[#050505] text-white overflow-hidden">
 
       {/* UI Overlay */}
-      <Hud stats={stats} unlockedCount={unlocked.length} />
+      <Hud stats={stats} unlockedCount={unlocked.length} objectives={<Objectives campaign={campaign} stats={stats} />} />
       <InsightToasts toasts={toasts} />
 
       {/* Main Simulation */}
       <Board
         key={sessionKey}
-        selectedArchetype={selectedArchetype}
+        selectedArchetype={archetype}
         rules={rules}
-        onStats={setStats}
+        onStats={handleStats}
         onInsight={handleInsight}
         onExtinct={setExtinct}
         onRestore={setUnlocked}
@@ -98,15 +155,18 @@ const App: React.FC = () => {
       {rules.focus && stats && <FocusBar focus={stats.focus} deniedAt={deniedAt} />}
 
       {/* Controls */}
+      {card && <ChapterCard key={card.key} chapter={card.chapter} onDone={() => setCard(undefined)} />}
+
       <Controls
-        selectedArchetype={selectedArchetype}
+        selectedArchetype={archetype}
+        available={available}
         onSelect={setSelectedArchetype}
       />
 
       <MindTools onExport={() => canvasRef.current && exportCanvas(canvasRef.current)} />
 
       {extinct && (
-        <ExtinctionScreen stats={extinct} insights={unlocked} onRestart={restart} />
+        <ExtinctionScreen stats={extinct} insights={unlocked} onRestart={restart} restartLabel="Retry this chapter" />
       )}
 
     </div>

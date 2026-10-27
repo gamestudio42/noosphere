@@ -44,8 +44,8 @@ export const DOUBT = {
   MAX_SPEED: 0.8,
   FIRST_DELAY_MS: 6000,     // grace period once doubts are switched on
   INTERVAL_MAX_MS: 22000,   // between arrivals, shrinking as the mind grows
-  INTERVAL_MIN_MS: 7000,
-  INTERVAL_PER_IDEA_MS: 150,
+  INTERVAL_MIN_MS: 5000,
+  INTERVAL_PER_IDEA_MS: 300,
   BASE_MAX: 2,              // concurrent doubts, plus one per 20 ideas
   MAX: 8,
 };
