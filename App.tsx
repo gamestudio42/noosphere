@@ -6,9 +6,10 @@ import { Hud } from './components/Hud';
 import { InsightToasts } from './components/InsightToasts';
 import { ExtinctionScreen } from './components/ExtinctionScreen';
 import { MindTools } from './components/MindTools';
+import { FocusBar } from './components/FocusBar';
 import { exportCanvas } from './utils/renderer';
 import { hasSavedMind } from './utils/persistence';
-import { Archetype, Insight, SessionStats } from './types';
+import { Archetype, GameRules, Insight, SessionStats } from './types';
 import { BrainCircuit } from 'lucide-react';
 
 const TOAST_MS = 4500;
@@ -22,7 +23,9 @@ const App: React.FC = () => {
   const [unlocked, setUnlocked] = useState<Insight[]>([]);
   const [toasts, setToasts] = useState<{ key: number; insight: Insight }[]>([]);
   const [extinct, setExtinct] = useState<SessionStats | null>(null);
+  const [deniedAt, setDeniedAt] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rules: GameRules = { focus: true, doubts: false };
 
   const handleInsight = useCallback((insight: Insight) => {
       setUnlocked(prev => [...prev, insight]);
@@ -83,12 +86,16 @@ const App: React.FC = () => {
       <Board
         key={sessionKey}
         selectedArchetype={selectedArchetype}
+        rules={rules}
         onStats={setStats}
         onInsight={handleInsight}
         onExtinct={setExtinct}
         onRestore={setUnlocked}
+        onDenied={() => setDeniedAt(Date.now())}
         canvasRef={canvasRef}
       />
+
+      {rules.focus && stats && <FocusBar focus={stats.focus} deniedAt={deniedAt} />}
 
       {/* Controls */}
       <Controls

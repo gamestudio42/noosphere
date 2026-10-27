@@ -160,3 +160,50 @@ export const playBlend = (blend: Archetype[], energy: number = 0.5) => {
   if (blend.length === 1) return playTone(blend[0], energy);
   blend.forEach(type => playTone(type, energy * 0.7));
 };
+
+// Short non-musical cues for game events
+type Cue = 'denied' | 'doubt' | 'banish' | 'chapter';
+
+const CUES: Record<Cue, { freqs: number[]; type: OscillatorType; length: number; gain: number; glide?: number }> = {
+  denied: { freqs: [70], type: 'sine', length: 0.25, gain: 0.25, glide: 0.6 },
+  doubt: { freqs: [92, 97.5], type: 'sawtooth', length: 1.6, gain: 0.06 },     // detuned, uneasy
+  banish: { freqs: [660, 990], type: 'triangle', length: 0.8, gain: 0.08, glide: 1.5 },
+  chapter: { freqs: [220, 277.2, 329.6, 440], type: 'sine', length: 3.5, gain: 0.07 },
+};
+
+export const playCue = (cue: Cue) => {
+  if (muted || activeVoices > MAX_POLYPHONY) return;
+  const ctx = getCtx();
+  if (!ctx || !masterGain || !reverbNode) return;
+  if (ctx.state === 'suspended') ctx.resume();
+
+  const config = CUES[cue];
+  const t = ctx.currentTime;
+  activeVoices++;
+
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0, t);
+  env.gain.linearRampToValueAtTime(config.gain, t + 0.02);
+  env.gain.exponentialRampToValueAtTime(0.001, t + config.length);
+  env.connect(masterGain);
+  env.connect(reverbNode);
+
+  const oscs = config.freqs.map((freq, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = config.type;
+    // Chords arpeggiate slightly so they bloom instead of hitting at once
+    const start = t + (cue === 'chapter' ? i * 0.12 : 0);
+    osc.frequency.setValueAtTime(freq, start);
+    if (config.glide) osc.frequency.exponentialRampToValueAtTime(freq * config.glide, start + config.length);
+    osc.connect(env);
+    osc.start(start);
+    osc.stop(t + config.length + 0.6);
+    return osc;
+  });
+
+  setTimeout(() => {
+    oscs.forEach(o => o.disconnect());
+    env.disconnect();
+    activeVoices--;
+  }, (config.length + 0.7) * 1000);
+};

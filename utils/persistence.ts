@@ -9,6 +9,7 @@ export interface SavedMind {
   width: number;
   height: number;
   nodes: IdeaNode[];
+  focus?: number;
   session: {
     duration: number;
     peakAlive: number;

@@ -56,6 +56,13 @@ export interface SessionStats {
   maxBlend: number;
   bonds: number;
   hybridsBorn: number;
+  focus: number; // 0..FOCUS.MAX
+}
+
+// What the current mode or chapter switches on
+export interface GameRules {
+  focus: boolean;  // actions cost focus
+  doubts: boolean; // doubts drift in and drain ideas
 }
 
 export interface Insight {

@@ -20,6 +20,18 @@ export const PHYSICS = {
   GRAVITY_FORCE: 0.0025,
 };
 
+// Focus: the player's attention budget (campaign only)
+export const FOCUS = {
+  MAX: 100,
+  REGEN: 0.1,            // per 60fps frame
+  HYBRID_REGEN: 0.01,    // extra regen per living hybrid...
+  HYBRID_REGEN_CAP: 10,  // ...counting at most this many
+  PLANT: 20,
+  STIMULATE: 10,
+  FEED: 0.25,            // per frame while the cursor feeds an idea
+  BANISH: 15,
+};
+
 export const ARCHETYPES: Record<Archetype, {
   label: string;
   hue: number;

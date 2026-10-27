@@ -1,9 +1,10 @@
 
 import React, { useRef, useEffect } from 'react';
-import { IdeaNode, Particle, Archetype, SessionStats, Insight } from '../types';
+import { IdeaNode, Particle, Archetype, SessionStats, Insight, GameRules } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
-import { PHYSICS } from '../constants';
-import { playTone, playBlend, setAmbience } from '../utils/audio';
+import { PHYSICS, FOCUS } from '../constants';
+import { playTone, playBlend, playCue, setAmbience } from '../utils/audio';
+import { canAfford, drainFocus, regenFocus } from '../utils/focus';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
 import { largestNetwork } from '../utils/stats';
 import { INSIGHTS } from '../insights';
@@ -11,10 +12,12 @@ import { saveMind, loadMind, clearMind } from '../utils/persistence';
 
 interface BoardProps {
   selectedArchetype: Archetype;
+  rules: GameRules;
   onStats: (stats: SessionStats) => void;
   onInsight: (insight: Insight) => void;
   onExtinct: (stats: SessionStats) => void;
   onRestore: (insights: Insight[]) => void;
+  onDenied: () => void;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
@@ -27,7 +30,7 @@ const STATS_INTERVAL_MS = 250;
 // How often the mind is saved to local storage
 const SAVE_INTERVAL_MS = 5000;
 
-export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct, onRestore, canvasRef }) => {
+export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats, onInsight, onExtinct, onRestore, onDenied, canvasRef }) => {
 
   // Game State Refs (Mutable for high-performance loop)
   const nodesRef = useRef<IdeaNode[]>([]);
@@ -41,8 +44,11 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
   // Read by the animation loop, so the loop doesn't restart when the archetype changes
   const archetypeRef = useRef(selectedArchetype);
   archetypeRef.current = selectedArchetype;
-  const callbacksRef = useRef({ onStats, onInsight, onExtinct });
-  callbacksRef.current = { onStats, onInsight, onExtinct };
+  const rulesRef = useRef(rules);
+  rulesRef.current = rules;
+  const focusRef = useRef<number>(FOCUS.MAX);
+  const callbacksRef = useRef({ onStats, onInsight, onExtinct, onDenied });
+  callbacksRef.current = { onStats, onInsight, onExtinct, onDenied };
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
 
@@ -71,6 +77,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
               n.pos.y *= sy;
           }
           nodesRef.current = saved.nodes;
+          focusRef.current = saved.focus ?? FOCUS.MAX;
           const session = sessionRef.current;
           Object.assign(session, {
               ...saved.session,
@@ -95,6 +102,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
               width: sizeRef.current.width,
               height: sizeRef.current.height,
               nodes: nodesRef.current,
+              focus: focusRef.current,
               session: {
                   duration: Date.now() - session.startedAt,
                   peakAlive: session.peakAlive,
@@ -162,6 +170,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
           maxBlend: session.maxBlend,
           bonds: session.bonds,
           hybridsBorn: session.hybridsBorn,
+          focus: focusRef.current,
       };
 
       const { onStats, onInsight, onExtinct } = callbacksRef.current;
@@ -192,15 +201,17 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       const { width, height } = sizeRef.current;
       const dt = lastFrameRef.current === null ? 1 : Math.min((time - lastFrameRef.current) / FRAME_MS, MAX_DT);
       lastFrameRef.current = time;
+      const { focus: usesFocus } = rulesRef.current;
 
-      // Update Physics
+      // Update Physics. An exhausted mind can't feed ideas.
+      const feeding = usesFocus && focusRef.current <= 0 ? null : mouseRef.current;
       const result = updatePhysics(
           nodesRef.current,
           particlesRef.current,
           width,
           height,
           dt,
-          mouseRef.current,
+          feeding,
           (event) => {
               const now = Date.now();
               if (event.kind === 'synthesis') sessionRef.current.bonds++;
@@ -228,6 +239,11 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
 
       nodesRef.current = result.nodes;
       particlesRef.current = result.particles;
+      if (usesFocus) {
+          let hybrids = 0;
+          for (const n of result.nodes) if (n.blend.length > 1) hybrids++;
+          focusRef.current = regenFocus(drainFocus(focusRef.current, result.fed, dt), hybrids, dt);
+      }
       reportStats();
 
       drawFrame(ctx, nodesRef.current, particlesRef.current, {
@@ -291,23 +307,41 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       // On touch there's no hover, so holding a finger down pays attention instead
       mouseRef.current = { x: cx, y: cy };
       const archetype = archetypeRef.current;
+      const usesFocus = rulesRef.current.focus;
+      // Returns false (with feedback) when the mind is too tired for an action
+      const spend = (cost: number) => {
+          if (!usesFocus) return true;
+          if (!canAfford(focusRef.current, cost)) {
+              playCue('denied');
+              callbacksRef.current.onDenied();
+              return false;
+          }
+          focusRef.current -= cost;
+          return true;
+      };
 
-      // Check click on node
-      let clickedNode = false;
+      // Check click on node: stimulate the closest one
+      let target: IdeaNode | null = null;
+      let best: number = ATTENTION_RADIUS;
       for (const node of nodesRef.current) {
           const d = Math.hypot(cx - node.pos.x, cy - node.pos.y);
-          if (d < ATTENTION_RADIUS) {
+          if (d < best) {
+              best = d;
+              target = node;
+          }
+      }
+
+      if (target) {
+          const node = target;
+          if (spend(FOCUS.STIMULATE)) {
               // Stimulate: a boost, not an instant split
               node.energy = Math.min(100, node.energy + 35);
               node.vel.x += (Math.random()-0.5) * 5;
               node.vel.y += (Math.random()-0.5) * 5;
               spawnParticles(node.pos.x, node.pos.y, `hsl(${node.hue}, 100%, 50%)`, 10);
               playBlend(node.blend, 1.0);
-              clickedNode = true;
           }
-      }
-
-      if (!clickedNode) {
+      } else if (spend(FOCUS.PLANT)) {
           // Plant new Idea
           const newNode = createNode(cx, cy, archetype);
           newNode.energy = 70;

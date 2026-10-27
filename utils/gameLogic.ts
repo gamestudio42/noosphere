@@ -90,9 +90,11 @@ export const updatePhysics = (
   dt: number,
   attention: Vector2 | null,
   onEvent: (event: SimEvent) => void
-): { nodes: IdeaNode[], particles: Particle[] } => {
+): { nodes: IdeaNode[], particles: Particle[], fed: number } => {
 
   let nextNodes = [...nodes];
+  // How many ideas the cursor fed this frame (feeding costs focus)
+  let fed = 0;
 
   // 1. Particle Physics
   particles.forEach(p => {
@@ -129,6 +131,7 @@ export const updatePhysics = (
     // Feed energy while the cursor hovers (attention)
     if (attention && distance(attention, node.pos) < ATTENTION_RADIUS) {
       node.energy += 1 * dt;
+      fed++;
     }
 
     // Movement Forces
@@ -299,5 +302,5 @@ export const updatePhysics = (
       n.connections = n.connections.filter(id => activeIds.has(id));
   });
 
-  return { nodes: nextNodes, particles: nextParticles };
+  return { nodes: nextNodes, particles: nextParticles, fed };
 };
