@@ -1,19 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Noosphere
 
-# Run and deploy your AI Studio app
+An interactive generative ecosystem of ideas. Plant thoughts, pay attention to
+them and watch them grow, bond, merge into hybrids and fade when forgotten.
 
-This contains everything you need to run your app locally.
+## How to play
 
-View your app in AI Studio: https://ai.studio/apps/drive/1JP8NpXcHX4Lt67ZesEpEPpLg-R7uj1Pd
+- **Click** empty space to plant an idea of the selected archetype.
+- **Hover** (or hold a finger on) an idea to feed it with attention.
+- **Click** an idea to give it a burst of energy.
+- Ideas split when they have enough energy and die when they run out.
+- Nearby ideas may bond. When ideas carrying different archetypes bond, they
+  give birth to a **hybrid** that blends their colour, sound and behaviour.
+- Unlock the eight **insights**. When every idea dies, the mind is forgotten
+  and you can plant a new one.
 
-## Run Locally
+The mind is saved in your browser, so you can close the tab and come back.
 
-**Prerequisites:**  Node.js
+### Archetypes
 
+| Archetype | Behaviour |
+| --- | --- |
+| Logic | Fades slowly and builds stable structures |
+| Feeling | Bonds easily with everything nearby |
+| Chaos | Multiplies fast, burns out fast |
+| Instinct | Heavy and slow, pulls other ideas in |
 
-1. Install dependencies:
-   `npm install`
-2. Run the app:
-   `npm run dev`
+Each pair of archetypes also has an affinity that draws them together or
+pushes them apart (see `AFFINITY` in `constants.ts`).
+
+## Development
+
+Requires Node.js 22+.
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run check      # typecheck + lint + tests
+npm run build      # static build in dist/
+```
+
+### Project layout
+
+- `utils/gameLogic.ts`: the simulation (pure apart from the swappable RNG in `utils/random.ts`)
+- `utils/renderer.ts`: canvas drawing and PNG export
+- `utils/audio.ts`: Web Audio tones, chords and the ambient drone
+- `utils/persistence.ts`: saving and restoring the mind in local storage
+- `components/Board.tsx`: the animation loop, input and session stats
+- `constants.ts` and `insights.ts`: tuning, archetypes and milestones

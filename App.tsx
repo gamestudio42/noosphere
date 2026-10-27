@@ -7,6 +7,7 @@ import { InsightToasts } from './components/InsightToasts';
 import { ExtinctionScreen } from './components/ExtinctionScreen';
 import { MindTools } from './components/MindTools';
 import { exportCanvas } from './utils/renderer';
+import { hasSavedMind } from './utils/persistence';
 import { Archetype, Insight, SessionStats } from './types';
 import { BrainCircuit } from 'lucide-react';
 
@@ -15,6 +16,7 @@ const TOAST_MS = 4500;
 const App: React.FC = () => {
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype>('RATIONAL');
   const [started, setStarted] = useState(false);
+  const [resumable] = useState(hasSavedMind);
   const [sessionKey, setSessionKey] = useState(0);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [unlocked, setUnlocked] = useState<Insight[]>([]);
@@ -63,7 +65,7 @@ const App: React.FC = () => {
                     className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-white/60 transition-colors"
                  >
                      <div className="absolute inset-0 w-full h-full bg-white/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
-                     <span className="relative text-sm font-bold uppercase tracking-[0.3em]">Enter The Mind</span>
+                     <span className="relative text-sm font-bold uppercase tracking-[0.3em]">{resumable ? 'Return To The Mind' : 'Enter The Mind'}</span>
                  </button>
              </div>
           </div>
@@ -84,6 +86,7 @@ const App: React.FC = () => {
         onStats={setStats}
         onInsight={handleInsight}
         onExtinct={setExtinct}
+        onRestore={setUnlocked}
         canvasRef={canvasRef}
       />
 

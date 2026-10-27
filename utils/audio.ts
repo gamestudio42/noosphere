@@ -19,7 +19,7 @@ const MAX_POLYPHONY = 20; // Maximum simultaneous sounds allowed
 
 const getCtx = () => {
   if (!audioCtx) {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (Ctx) {
         audioCtx = new Ctx();
         

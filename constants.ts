@@ -8,14 +8,14 @@ export const PHYSICS = {
   MAX_VELOCITY: 2,
   GROWTH_THRESHOLD: 90,
   DECAY_RATE: 0.05,
-  CONNECTION_DISTANCE: 130,
+  CONNECTION_DISTANCE: 150,
   MAX_NODES: 150,
   MAX_CONNECTIONS: 6,      // a saturated idea stops bonding
   SYNTHESIS_ENERGY: 6,
   HYBRID_COST: 15,         // energy each parent spends on a hybrid
   SYNTHESIS_CHANCE: 0.003, // per node, per 60fps frame
-  AFFINITY_RANGE: 160,     // distance within which affinities push/pull
-  AFFINITY_FORCE: 0.004,
+  AFFINITY_RANGE: 220,     // distance within which affinities push/pull
+  AFFINITY_FORCE: 0.05,
   GRAVITY_RANGE: 220,
   GRAVITY_FORCE: 0.0025,
 };

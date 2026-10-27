@@ -7,12 +7,14 @@ import { playTone, playBlend, setAmbience } from '../utils/audio';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
 import { largestNetwork } from '../utils/stats';
 import { INSIGHTS } from '../insights';
+import { saveMind, loadMind, clearMind } from '../utils/persistence';
 
 interface BoardProps {
   selectedArchetype: Archetype;
   onStats: (stats: SessionStats) => void;
   onInsight: (insight: Insight) => void;
   onExtinct: (stats: SessionStats) => void;
+  onRestore: (insights: Insight[]) => void;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
@@ -22,8 +24,10 @@ const FRAME_MS = 1000 / 60;
 const MAX_DT = 3;
 // How often stats are pushed to the UI
 const STATS_INTERVAL_MS = 250;
+// How often the mind is saved to local storage
+const SAVE_INTERVAL_MS = 5000;
 
-export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct, canvasRef }) => {
+export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct, onRestore, canvasRef }) => {
 
   // Game State Refs (Mutable for high-performance loop)
   const nodesRef = useRef<IdeaNode[]>([]);
@@ -39,6 +43,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
   archetypeRef.current = selectedArchetype;
   const callbacksRef = useRef({ onStats, onInsight, onExtinct });
   callbacksRef.current = { onStats, onInsight, onExtinct };
+  const onRestoreRef = useRef(onRestore);
+  onRestoreRef.current = onRestore;
 
   // Session bookkeeping (counters the simulation itself doesn't keep)
   const sessionRef = useRef({
@@ -54,12 +60,62 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       extinct: false,
   });
 
-  // Initialize
+  // Initialize: resume the saved mind, or seed the initial thought
   useEffect(() => {
-      // Seed the initial thought
+      const saved = loadMind();
+      if (saved) {
+          const sx = window.innerWidth / saved.width;
+          const sy = window.innerHeight / saved.height;
+          for (const n of saved.nodes) {
+              n.pos.x *= sx;
+              n.pos.y *= sy;
+          }
+          nodesRef.current = saved.nodes;
+          const session = sessionRef.current;
+          Object.assign(session, {
+              ...saved.session,
+              startedAt: Date.now() - saved.session.duration,
+              unlocked: new Set(saved.session.unlocked),
+          });
+          onRestoreRef.current(INSIGHTS.filter(i => session.unlocked.has(i.id)));
+          return;
+      }
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
       nodesRef.current = [createNode(cx, cy, archetypeRef.current)];
+  }, []);
+
+  // Persist the mind periodically and when the page is hidden or closed
+  useEffect(() => {
+      const save = () => {
+          const session = sessionRef.current;
+          if (session.extinct || nodesRef.current.length === 0) return;
+          saveMind({
+              savedAt: Date.now(),
+              width: sizeRef.current.width,
+              height: sizeRef.current.height,
+              nodes: nodesRef.current,
+              session: {
+                  duration: Date.now() - session.startedAt,
+                  peakAlive: session.peakAlive,
+                  maxGeneration: session.maxGeneration,
+                  largestNetwork: session.largestNetwork,
+                  maxBlend: session.maxBlend,
+                  bonds: session.bonds,
+                  hybridsBorn: session.hybridsBorn,
+                  unlocked: [...session.unlocked],
+              },
+          });
+      };
+      const interval = window.setInterval(save, SAVE_INTERVAL_MS);
+      const onHide = () => { if (document.visibilityState === 'hidden') save(); };
+      document.addEventListener('visibilitychange', onHide);
+      window.addEventListener('pagehide', save);
+      return () => {
+          window.clearInterval(interval);
+          document.removeEventListener('visibilitychange', onHide);
+          window.removeEventListener('pagehide', save);
+      };
   }, []);
 
   const spawnParticles = (x: number, y: number, color: string, count: number = 5) => {
@@ -121,6 +177,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       if (nodes.length === 0) {
           session.extinct = true;
           setAmbience(0);
+          clearMind();
           onExtinct(stats);
       }
   };
@@ -223,6 +280,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
           cancelAnimationFrame(requestRef.current);
           setAmbience(0);
       };
+      // The loop reads everything through refs, so it is started exactly once
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Pointer events cover mouse, touch and pen without the touch→mouse double fire
