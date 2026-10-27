@@ -27,6 +27,7 @@ export const Hud: React.FC<HudProps> = ({ stats, unlockedCount }) => {
               <Stat label="Hybrids" value={stats.hybridsAlive} />
               <Stat label="Generation" value={stats.maxGeneration} />
               <Stat label="Largest web" value={stats.largestNetwork} />
+              {stats.doubtsAlive > 0 && <Stat label="Doubts" value={<span className="text-violet-300">{stats.doubtsAlive}</span>} />}
               <Stat label="Mind age" value={formatDuration(stats.duration)} />
             </div>
           )}

@@ -1,5 +1,5 @@
 
-import { IdeaNode } from '../types';
+import { Doubt, IdeaNode } from '../types';
 import { blendTraits, normalizeBlend } from './gameLogic';
 
 const KEY = 'noosphere:mind:v1';
@@ -10,6 +10,7 @@ export interface SavedMind {
   height: number;
   nodes: IdeaNode[];
   focus?: number;
+  doubts?: Doubt[];
   session: {
     duration: number;
     peakAlive: number;
@@ -18,6 +19,8 @@ export interface SavedMind {
     maxBlend: number;
     bonds: number;
     hybridsBorn: number;
+    doubtsBanished?: number;
+    doubtsDissolved?: number;
     unlocked: string[];
   };
 }

@@ -1,6 +1,7 @@
 
-import { IdeaNode, Particle, Vector2 } from '../types';
+import { Doubt, IdeaNode, Particle, Vector2 } from '../types';
 import { ATTENTION_RADIUS } from './gameLogic';
+import { doubtRadius } from './doubts';
 
 export const BACKGROUND = '#050505';
 
@@ -26,6 +27,7 @@ export const drawFrame = (
   ctx: CanvasRenderingContext2D,
   nodes: IdeaNode[],
   particles: Particle[],
+  doubts: Doubt[],
   { width, height, time, attention, reducedMotion }: FrameOptions
 ) => {
   // The canvas is transparent over a CSS background. Fading alpha with
@@ -133,8 +135,39 @@ export const drawFrame = (
   });
   ctx.globalAlpha = 1.0;
 
-  // Reset
+  // Doubts are drawn normally (not additively) so they darken what they cover
   ctx.globalCompositeOperation = 'source-over';
+  doubts.forEach(doubt => drawDoubt(ctx, doubt, time, reducedMotion));
+};
+
+const DOUBT_POINTS = 14;
+
+// A jagged, writhing blot of darkness with a pale rim
+const drawDoubt = (ctx: CanvasRenderingContext2D, doubt: Doubt, time: number, reducedMotion: boolean) => {
+  const r = doubtRadius(doubt);
+  const t = reducedMotion ? 0 : time * 0.004;
+  ctx.beginPath();
+  for (let i = 0; i <= DOUBT_POINTS; i++) {
+    const a = (i / DOUBT_POINTS) * Math.PI * 2;
+    const spike = i % 2 === 0 ? 1.15 : 0.8;
+    const wobble = 1 + 0.15 * Math.sin(t + i * 1.7 + doubt.seed);
+    const x = doubt.pos.x + Math.cos(a) * r * spike * wobble;
+    const y = doubt.pos.y + Math.sin(a) * r * spike * wobble;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(6, 3, 12, 0.88)';
+  ctx.fill();
+  // Latched doubts flare as they feed
+  ctx.strokeStyle = doubt.target ? 'hsla(280, 60%, 70%, 0.8)' : 'hsla(265, 30%, 65%, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(doubt.pos.x, doubt.pos.y, r * 0.35, 0, Math.PI * 2);
+  ctx.fillStyle = 'hsla(275, 50%, 40%, 0.6)';
+  ctx.fill();
 };
 
 // Save the current canvas as a PNG, composited over the page background

@@ -1,10 +1,11 @@
 
 import React, { useRef, useEffect } from 'react';
-import { IdeaNode, Particle, Archetype, SessionStats, Insight, GameRules } from '../types';
+import { IdeaNode, Particle, Archetype, SessionStats, Insight, GameRules, Doubt } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
-import { PHYSICS, FOCUS } from '../constants';
+import { PHYSICS, FOCUS, DOUBT } from '../constants';
 import { playTone, playBlend, playCue, setAmbience } from '../utils/audio';
 import { canAfford, drainFocus, regenFocus } from '../utils/focus';
+import { doubtAt, maxDoubts, spawnDoubt, spawnInterval, updateDoubts } from '../utils/doubts';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
 import { largestNetwork } from '../utils/stats';
 import { INSIGHTS } from '../insights';
@@ -47,6 +48,10 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
   const rulesRef = useRef(rules);
   rulesRef.current = rules;
   const focusRef = useRef<number>(FOCUS.MAX);
+  const doubtsRef = useRef<Doubt[]>([]);
+  // Simulated time doubts have been active, and when the next one arrives
+  const doubtClockRef = useRef(0);
+  const nextDoubtRef = useRef<number>(DOUBT.FIRST_DELAY_MS);
   const callbacksRef = useRef({ onStats, onInsight, onExtinct, onDenied });
   callbacksRef.current = { onStats, onInsight, onExtinct, onDenied };
   const onRestoreRef = useRef(onRestore);
@@ -61,6 +66,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       maxBlend: 1,
       bonds: 0,
       hybridsBorn: 0,
+      doubtsBanished: 0,
+      doubtsDissolved: 0,
       unlocked: new Set<string>(),
       lastStatsAt: 0,
       extinct: false,
@@ -78,6 +85,11 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           }
           nodesRef.current = saved.nodes;
           focusRef.current = saved.focus ?? FOCUS.MAX;
+          doubtsRef.current = saved.doubts ?? [];
+          for (const d of doubtsRef.current) {
+              d.pos.x *= sx;
+              d.pos.y *= sy;
+          }
           const session = sessionRef.current;
           Object.assign(session, {
               ...saved.session,
@@ -103,6 +115,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
               height: sizeRef.current.height,
               nodes: nodesRef.current,
               focus: focusRef.current,
+              doubts: doubtsRef.current,
               session: {
                   duration: Date.now() - session.startedAt,
                   peakAlive: session.peakAlive,
@@ -111,6 +124,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
                   maxBlend: session.maxBlend,
                   bonds: session.bonds,
                   hybridsBorn: session.hybridsBorn,
+                  doubtsBanished: session.doubtsBanished,
+                  doubtsDissolved: session.doubtsDissolved,
                   unlocked: [...session.unlocked],
               },
           });
@@ -171,6 +186,9 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           bonds: session.bonds,
           hybridsBorn: session.hybridsBorn,
           focus: focusRef.current,
+          doubtsAlive: doubtsRef.current.length,
+          doubtsBanished: session.doubtsBanished,
+          doubtsDissolved: session.doubtsDissolved,
       };
 
       const { onStats, onInsight, onExtinct } = callbacksRef.current;
@@ -201,7 +219,28 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       const { width, height } = sizeRef.current;
       const dt = lastFrameRef.current === null ? 1 : Math.min((time - lastFrameRef.current) / FRAME_MS, MAX_DT);
       lastFrameRef.current = time;
-      const { focus: usesFocus } = rulesRef.current;
+      const { focus: usesFocus, doubts: usesDoubts } = rulesRef.current;
+
+      if (usesDoubts) {
+          doubtClockRef.current += dt * FRAME_MS;
+          const alive = nodesRef.current.length;
+          if (alive > 0 && doubtClockRef.current >= nextDoubtRef.current) {
+              if (doubtsRef.current.length < maxDoubts(alive)) {
+                  doubtsRef.current.push(spawnDoubt(width, height));
+                  playCue('doubt');
+              }
+              nextDoubtRef.current = doubtClockRef.current + spawnInterval(alive);
+          }
+          doubtsRef.current = updateDoubts(doubtsRef.current, nodesRef.current, width, height, dt, (event) => {
+              if (event.kind !== 'dissolved') return;
+              // Logic saw through it
+              sessionRef.current.doubtsDissolved++;
+              spawnParticles(event.doubt.pos.x, event.doubt.pos.y, 'hsl(190, 100%, 80%)', 12);
+              playCue('banish');
+          });
+      } else if (doubtsRef.current.length > 0) {
+          doubtsRef.current = [];
+      }
 
       // Update Physics. An exhausted mind can't feed ideas.
       const feeding = usesFocus && focusRef.current <= 0 ? null : mouseRef.current;
@@ -246,7 +285,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       }
       reportStats();
 
-      drawFrame(ctx, nodesRef.current, particlesRef.current, {
+      drawFrame(ctx, nodesRef.current, particlesRef.current, doubtsRef.current, {
           width,
           height,
           time,
@@ -319,6 +358,18 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           focusRef.current -= cost;
           return true;
       };
+
+      // Banishing a doubt takes priority over everything under it
+      const doubt = doubtAt(doubtsRef.current, cx, cy);
+      if (doubt) {
+          if (spend(FOCUS.BANISH)) {
+              doubtsRef.current = doubtsRef.current.filter(d => d !== doubt);
+              sessionRef.current.doubtsBanished++;
+              spawnParticles(doubt.pos.x, doubt.pos.y, 'hsl(275, 80%, 85%)', 20);
+              playCue('banish');
+          }
+          return;
+      }
 
       // Check click on node: stimulate the closest one
       let target: IdeaNode | null = null;

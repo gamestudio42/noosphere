@@ -25,7 +25,7 @@ const App: React.FC = () => {
   const [extinct, setExtinct] = useState<SessionStats | null>(null);
   const [deniedAt, setDeniedAt] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rules: GameRules = { focus: true, doubts: false };
+  const rules: GameRules = { focus: true, doubts: true };
 
   const handleInsight = useCallback((insight: Insight) => {
       setUnlocked(prev => [...prev, insight]);

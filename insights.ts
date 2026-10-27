@@ -45,6 +45,12 @@ export const INSIGHTS: Insight[] = [
     test: s => s.maxBlend >= 4,
   },
   {
+    id: 'clarity',
+    title: 'Clarity',
+    description: 'Ten doubts banished or seen through.',
+    test: s => s.doubtsBanished + s.doubtsDissolved >= 10,
+  },
+  {
     id: 'long-memory',
     title: 'Long Memory',
     description: 'The mind stayed alive for five minutes.',

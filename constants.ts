@@ -32,6 +32,24 @@ export const FOCUS = {
   BANISH: 15,
 };
 
+export const DOUBT = {
+  STRENGTH: 60,             // on arrival
+  MAX_STRENGTH: 150,
+  DRAIN: 0.25,              // energy taken from a latched idea per frame...
+  RESIST: 0.25,             // ...divided by 1 + RESIST * its connections
+  FEED: 0.4,                // strength gained per energy drained
+  LOGIC_RANGE: 90,          // Logic ideas within this range dissolve doubts
+  LOGIC_DISSOLVE: 0.12,     // strength lost per frame per nearby Logic idea
+  ACCEL: 0.03,
+  MAX_SPEED: 0.8,
+  FIRST_DELAY_MS: 6000,     // grace period once doubts are switched on
+  INTERVAL_MAX_MS: 22000,   // between arrivals, shrinking as the mind grows
+  INTERVAL_MIN_MS: 7000,
+  INTERVAL_PER_IDEA_MS: 150,
+  BASE_MAX: 2,              // concurrent doubts, plus one per 20 ideas
+  MAX: 8,
+};
+
 export const ARCHETYPES: Record<Archetype, {
   label: string;
   hue: number;

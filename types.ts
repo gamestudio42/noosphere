@@ -31,6 +31,16 @@ export interface IdeaNode {
   hue: number;
 }
 
+// A threat that drifts in, latches onto an idea and drains it
+export interface Doubt {
+  id: string;
+  pos: Vector2;
+  vel: Vector2;
+  strength: number; // dies at 0, grows while feeding
+  target: string | null; // id of the idea it is latched onto
+  seed: number; // drives its wobble
+}
+
 export interface Particle {
   x: number;
   y: number;
@@ -57,6 +67,9 @@ export interface SessionStats {
   bonds: number;
   hybridsBorn: number;
   focus: number; // 0..FOCUS.MAX
+  doubtsAlive: number;
+  doubtsBanished: number; // by the player
+  doubtsDissolved: number; // by Logic ideas
 }
 
 // What the current mode or chapter switches on
