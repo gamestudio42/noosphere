@@ -302,6 +302,9 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
           const dpr = window.devicePixelRatio || 1;
           const width = window.innerWidth;
           const height = window.innerHeight;
+          // A hidden or collapsed view can report a zero size; scaling by it
+          // would collapse every position and turn them into NaN on the way back
+          if (width === 0 || height === 0) return;
           // Keep the mind's layout proportional to the new viewport
           const prev = sizeRef.current;
           if (prev.width !== width || prev.height !== height) {

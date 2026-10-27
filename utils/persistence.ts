@@ -48,7 +48,11 @@ export const loadMind = (): SavedMind | null => {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const mind = JSON.parse(raw) as SavedMind;
-    if (!Array.isArray(mind.nodes) || mind.nodes.length === 0) return null;
+    if (!Array.isArray(mind.nodes)) return null;
+    // Drop anything corrupted by an older bug (NaN positions save as null)
+    mind.nodes = mind.nodes.filter(n => Number.isFinite(n.pos?.x) && Number.isFinite(n.pos?.y));
+    if (mind.nodes.length === 0) return null;
+    mind.doubts = mind.doubts?.filter(d => Number.isFinite(d.pos?.x) && Number.isFinite(d.pos?.y));
     // Traits are derived data; recompute in case archetype tuning changed
     for (const n of mind.nodes) {
       n.blend = normalizeBlend(n.blend);
