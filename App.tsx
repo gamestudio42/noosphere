@@ -1,10 +1,12 @@
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { Hud } from './components/Hud';
 import { InsightToasts } from './components/InsightToasts';
 import { ExtinctionScreen } from './components/ExtinctionScreen';
+import { MindTools } from './components/MindTools';
+import { exportCanvas } from './utils/renderer';
 import { Archetype, Insight, SessionStats } from './types';
 import { BrainCircuit } from 'lucide-react';
 
@@ -18,6 +20,7 @@ const App: React.FC = () => {
   const [unlocked, setUnlocked] = useState<Insight[]>([]);
   const [toasts, setToasts] = useState<{ key: number; insight: Insight }[]>([]);
   const [extinct, setExtinct] = useState<SessionStats | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleInsight = useCallback((insight: Insight) => {
       setUnlocked(prev => [...prev, insight]);
@@ -81,6 +84,7 @@ const App: React.FC = () => {
         onStats={setStats}
         onInsight={handleInsight}
         onExtinct={setExtinct}
+        canvasRef={canvasRef}
       />
 
       {/* Controls */}
@@ -88,6 +92,8 @@ const App: React.FC = () => {
         selectedArchetype={selectedArchetype}
         onSelect={setSelectedArchetype}
       />
+
+      <MindTools onExport={() => canvasRef.current && exportCanvas(canvasRef.current)} />
 
       {extinct && (
         <ExtinctionScreen stats={extinct} insights={unlocked} onRestart={restart} />

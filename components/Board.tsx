@@ -2,7 +2,9 @@
 import React, { useRef, useEffect } from 'react';
 import { IdeaNode, Particle, Archetype, SessionStats, Insight } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
-import { playTone, playBlend } from '../utils/audio';
+import { PHYSICS } from '../constants';
+import { playTone, playBlend, setAmbience } from '../utils/audio';
+import { drawFrame, BACKGROUND } from '../utils/renderer';
 import { largestNetwork } from '../utils/stats';
 import { INSIGHTS } from '../insights';
 
@@ -11,6 +13,7 @@ interface BoardProps {
   onStats: (stats: SessionStats) => void;
   onInsight: (insight: Insight) => void;
   onExtinct: (stats: SessionStats) => void;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
 // Frame duration the physics constants were tuned for (60fps)
@@ -20,8 +23,7 @@ const MAX_DT = 3;
 // How often stats are pushed to the UI
 const STATS_INTERVAL_MS = 250;
 
-export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct, canvasRef }) => {
 
   // Game State Refs (Mutable for high-performance loop)
   const nodesRef = useRef<IdeaNode[]>([]);
@@ -31,6 +33,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
   const mouseRef = useRef<{x: number, y: number} | null>(null);
   const lastAudioTimeRef = useRef<number>(0);
   const sizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
+  const reducedMotionRef = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   // Read by the animation loop, so the loop doesn't restart when the archetype changes
   const archetypeRef = useRef(selectedArchetype);
   archetypeRef.current = selectedArchetype;
@@ -61,7 +64,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
 
   const spawnParticles = (x: number, y: number, color: string, count: number = 5) => {
       // Safety Cap: Don't spawn if too many particles exist
-      if (particlesRef.current.length > 1500) return;
+      if (reducedMotionRef.current || particlesRef.current.length > 1500) return;
 
       for(let i=0; i<count; i++) {
           const angle = Math.random() * Math.PI * 2;
@@ -74,100 +77,6 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
               color
           });
       }
-  };
-
-  const draw = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-      // Clear with Trail Effect
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Low opacity for trails
-      ctx.fillRect(0, 0, width, height);
-
-      const nodes = nodesRef.current;
-      const particles = particlesRef.current;
-
-      ctx.globalCompositeOperation = 'lighter';
-
-      // PERFORMANCE FIX: Create a Map for O(1) lookups
-      // When we have 150 nodes, finding by ID in a loop creates lag (O(N^2) or worse).
-      const nodeMap = new Map<string, IdeaNode>();
-      for (const n of nodes) {
-          nodeMap.set(n.id, n);
-      }
-
-      // Draw Connections (Synapses)
-      ctx.lineWidth = 1;
-      const drawnConnections = new Set<string>();
-
-      nodes.forEach(node => {
-          node.connections.forEach(targetId => {
-              const target = nodeMap.get(targetId); // O(1) Lookup
-              if (target) {
-                  const key = [node.id, target.id].sort().join('-');
-                  if (drawnConnections.has(key)) return;
-                  drawnConnections.add(key);
-
-                  // Safety check for gradients
-                  const energyA = Math.max(0, Math.min(1, node.energy / 100));
-                  const energyB = Math.max(0, Math.min(1, target.energy / 100));
-
-                  const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
-                  grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
-                  grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
-
-                  ctx.strokeStyle = grad;
-                  ctx.beginPath();
-                  ctx.moveTo(node.pos.x, node.pos.y);
-
-                  // Slight curve
-                  const midX = (node.pos.x + target.pos.x) / 2;
-                  const midY = (node.pos.y + target.pos.y) / 2;
-                  // Jitter for neural look
-                  ctx.quadraticCurveTo(midX + (Math.random()-0.5)*2, midY + (Math.random()-0.5)*2, target.pos.x, target.pos.y);
-
-                  ctx.stroke();
-              }
-          });
-      });
-
-      // Draw Nodes
-      nodes.forEach(node => {
-          const glow = Math.max(0, Math.min(1, node.energy / 100));
-          const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
-
-          ctx.beginPath();
-          ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
-          ctx.fillStyle = color;
-          ctx.fill();
-
-          // Core
-          ctx.beginPath();
-          ctx.arc(node.pos.x, node.pos.y, node.radius * 0.4, 0, Math.PI * 2);
-          ctx.fillStyle = '#fff';
-          ctx.fill();
-
-          // Interaction Highlight (energy feeding happens in updatePhysics)
-          if (mouseRef.current) {
-              const d = Math.hypot(mouseRef.current.x - node.pos.x, mouseRef.current.y - node.pos.y);
-              if (d < ATTENTION_RADIUS) {
-                  ctx.beginPath();
-                  ctx.arc(node.pos.x, node.pos.y, node.radius * 2, 0, Math.PI * 2);
-                  ctx.strokeStyle = 'white';
-                  ctx.stroke();
-              }
-          }
-      });
-
-      // Draw Particles
-      particles.forEach(p => {
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = p.life;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = 1.0;
-      });
-
-      // Reset
-      ctx.globalCompositeOperation = 'source-over';
   };
 
   const reportStats = () => {
@@ -201,6 +110,8 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
 
       const { onStats, onInsight, onExtinct } = callbacksRef.current;
       onStats(stats);
+      // The drone swells as the mind grows
+      setAmbience(nodes.length / PHYSICS.MAX_NODES);
       for (const insight of INSIGHTS) {
           if (!session.unlocked.has(insight.id) && insight.test(stats)) {
               session.unlocked.add(insight.id);
@@ -209,6 +120,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       }
       if (nodes.length === 0) {
           session.extinct = true;
+          setAmbience(0);
           onExtinct(stats);
       }
   };
@@ -261,7 +173,13 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
       particlesRef.current = result.particles;
       reportStats();
 
-      draw(ctx, width, height);
+      drawFrame(ctx, nodesRef.current, particlesRef.current, {
+          width,
+          height,
+          time,
+          attention: mouseRef.current,
+          reducedMotion: reducedMotionRef.current,
+      });
       requestRef.current = requestAnimationFrame(animate);
   };
 
@@ -272,6 +190,16 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
           const dpr = window.devicePixelRatio || 1;
           const width = window.innerWidth;
           const height = window.innerHeight;
+          // Keep the mind's layout proportional to the new viewport
+          const prev = sizeRef.current;
+          if (prev.width !== width || prev.height !== height) {
+              const sx = width / prev.width;
+              const sy = height / prev.height;
+              for (const n of nodesRef.current) {
+                  n.pos.x *= sx;
+                  n.pos.y *= sy;
+              }
+          }
           sizeRef.current = { width, height };
           canvas.width = Math.round(width * dpr);
           canvas.height = Math.round(height * dpr);
@@ -280,14 +208,20 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
           canvas.getContext('2d')?.setTransform(dpr, 0, 0, dpr, 0, 0);
       };
 
+      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const handleMotion = () => { reducedMotionRef.current = motionQuery.matches; };
+
       window.addEventListener('resize', handleResize);
+      motionQuery.addEventListener('change', handleMotion);
       handleResize();
       lastFrameRef.current = null;
       requestRef.current = requestAnimationFrame(animate);
 
       return () => {
           window.removeEventListener('resize', handleResize);
+          motionQuery.removeEventListener('change', handleMotion);
           cancelAnimationFrame(requestRef.current);
+          setAmbience(0);
       };
   }, []);
 
@@ -337,7 +271,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsi
   };
 
   return (
-    <div className="fixed inset-0 cursor-crosshair">
+    <div className="fixed inset-0 cursor-crosshair" style={{ background: BACKGROUND }}>
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}

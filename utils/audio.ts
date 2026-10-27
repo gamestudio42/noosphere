@@ -7,6 +7,11 @@ let audioCtx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
 let reverbNode: ConvolverNode | null = null;
 let reverbGain: GainNode | null = null;
+let ambienceGain: GainNode | null = null;
+let ambienceFilter: BiquadFilterNode | null = null;
+
+const MASTER_VOLUME = 0.3;
+let muted = false;
 
 // Polyphony Management to prevent crashes
 let activeVoices = 0;
@@ -20,11 +25,12 @@ const getCtx = () => {
         
         // Master Volume
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.3;
+        masterGain.gain.value = muted ? 0 : MASTER_VOLUME;
         masterGain.connect(audioCtx.destination);
         
         // Initialize Shared FX
         createSharedReverb(audioCtx);
+        createAmbience(audioCtx);
     }
   }
   return audioCtx;
@@ -55,9 +61,47 @@ const createSharedReverb = (ctx: AudioContext) => {
     if (masterGain) reverbGain.connect(masterGain);
 };
 
+// Low drone under everything; silent until setAmbience raises it
+const createAmbience = (ctx: AudioContext) => {
+    ambienceGain = ctx.createGain();
+    ambienceGain.gain.value = 0;
+    ambienceFilter = ctx.createBiquadFilter();
+    ambienceFilter.type = 'lowpass';
+    ambienceFilter.frequency.value = 200;
+
+    // Root and a slightly detuned fifth for a slow beating texture
+    for (const freq of [55, 82.7]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        osc.connect(ambienceFilter);
+        osc.start();
+    }
+    ambienceFilter.connect(ambienceGain);
+    if (masterGain) ambienceGain.connect(masterGain);
+};
+
+// level 0..1, usually how full the mind is. No-op until audio has started.
+export const setAmbience = (level: number) => {
+    if (!audioCtx || !ambienceGain || !ambienceFilter) return;
+    const t = audioCtx.currentTime;
+    const clamped = Math.max(0, Math.min(1, level));
+    ambienceGain.gain.setTargetAtTime(clamped > 0 ? 0.03 + clamped * 0.08 : 0, t, 1.5);
+    ambienceFilter.frequency.setTargetAtTime(200 + clamped * 700, t, 1.5);
+};
+
+export const isMuted = () => muted;
+
+export const setMuted = (value: boolean) => {
+    muted = value;
+    if (audioCtx && masterGain) {
+        masterGain.gain.setTargetAtTime(muted ? 0 : MASTER_VOLUME, audioCtx.currentTime, 0.05);
+    }
+};
+
 export const playTone = (type: Archetype, energy: number = 0.5) => {
   // 1. Safety Limit (Polyphony)
-  if (activeVoices > MAX_POLYPHONY) return;
+  if (muted || activeVoices > MAX_POLYPHONY) return;
 
   const ctx = getCtx();
   if (!ctx || !masterGain || !reverbNode) return;
