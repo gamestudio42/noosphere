@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { IdeaNode, Particle, Archetype } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
-import { playTone } from '../utils/audio';
+import { playTone, playBlend } from '../utils/audio';
 
 interface BoardProps {
   selectedArchetype: Archetype;
@@ -166,15 +166,24 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
           height,
           dt,
           mouseRef.current,
-          (x, y, type) => {
-              // On Synthesis/Birth Callback
-              spawnParticles(x, y, '#fff', 8);
+          (event) => {
+              const now = Date.now();
+              if (event.kind === 'hybrid') {
+                  // A new kind of idea: always celebrate it
+                  spawnParticles(event.x, event.y, `hsl(${event.node.hue}, 100%, 70%)`, 24);
+                  playBlend(event.node.blend, 0.9);
+                  lastAudioTimeRef.current = now;
+                  return;
+              }
 
+              // On Synthesis/Birth Callback
+              spawnParticles(event.x, event.y, '#fff', 8);
+              
               // Throttle audio: Only play if 80ms have passed since last tone
               // This limits automatic audio to ~12 notes/sec max
-              const now = Date.now();
               if (now - lastAudioTimeRef.current > 80) {
-                  playTone(type, 0.4);
+                  const source = event.kind === 'split' ? event.node : event.a;
+                  playTone(source.type, 0.4);
                   lastAudioTimeRef.current = now;
               }
           }
@@ -226,12 +235,12 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
       for (const node of nodesRef.current) {
           const d = Math.hypot(cx - node.pos.x, cy - node.pos.y);
           if (d < ATTENTION_RADIUS) {
-              // Stimulate
-              node.energy = 100;
+              // Stimulate: a boost, not an instant split
+              node.energy = Math.min(100, node.energy + 35);
               node.vel.x += (Math.random()-0.5) * 5;
               node.vel.y += (Math.random()-0.5) * 5;
               spawnParticles(node.pos.x, node.pos.y, `hsl(${node.hue}, 100%, 50%)`, 10);
-              playTone(node.type, 1.0);
+              playBlend(node.blend, 1.0);
               clickedNode = true;
           }
       }
@@ -239,7 +248,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
       if (!clickedNode) {
           // Plant new Idea
           const newNode = createNode(cx, cy, archetype);
-          newNode.energy = 100;
+          newNode.energy = 70;
           nodesRef.current.push(newNode);
           spawnParticles(cx, cy, '#fff', 15);
           playTone(archetype, 0.8);

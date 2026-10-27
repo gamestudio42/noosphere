@@ -110,3 +110,9 @@ export const playTone = (type: Archetype, energy: number = 0.5) => {
     activeVoices--;
   }, 3100);
 };
+
+// Hybrids sound as a chord of every archetype they carry
+export const playBlend = (blend: Archetype[], energy: number = 0.5) => {
+  if (blend.length === 1) return playTone(blend[0], energy);
+  blend.forEach(type => playTone(type, energy * 0.7));
+};
