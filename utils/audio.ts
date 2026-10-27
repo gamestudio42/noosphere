@@ -110,7 +110,3 @@ export const playTone = (type: Archetype, energy: number = 0.5) => {
     activeVoices--;
   }, 3100);
 };
-
-export const playAmbience = () => {
-    // Placeholder
-};

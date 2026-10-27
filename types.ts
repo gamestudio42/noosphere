@@ -28,12 +28,3 @@ export interface Particle {
   life: number;
   color: string;
 }
-
-export interface GameState {
-  nodes: IdeaNode[];
-  particles: Particle[];
-  selectedArchetype: Archetype;
-  isRunning: boolean;
-  message: string | null;
-  ideaCount: number;
-}

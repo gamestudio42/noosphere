@@ -1,31 +1,39 @@
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GameState, IdeaNode, Particle, Archetype } from '../types';
-import { createNode, updatePhysics } from '../utils/gameLogic';
+import React, { useRef, useEffect } from 'react';
+import { IdeaNode, Particle, Archetype } from '../types';
+import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { playTone } from '../utils/audio';
-import { ARCHETYPES } from '../constants';
 
 interface BoardProps {
   selectedArchetype: Archetype;
 }
 
+// Frame duration the physics constants were tuned for (60fps)
+const FRAME_MS = 1000 / 60;
+// Cap dt so a backgrounded tab doesn't make the simulation jump
+const MAX_DT = 3;
+
 export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Game State Refs (Mutable for high-performance loop)
   const nodesRef = useRef<IdeaNode[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const requestRef = useRef<number>(0);
+  const lastFrameRef = useRef<number | null>(null);
   const mouseRef = useRef<{x: number, y: number} | null>(null);
   const lastAudioTimeRef = useRef<number>(0);
-  
+  const sizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
+  // Read by the animation loop, so the loop doesn't restart when the archetype changes
+  const archetypeRef = useRef(selectedArchetype);
+  archetypeRef.current = selectedArchetype;
+
   // Initialize
   useEffect(() => {
       // Seed the initial thought
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
-      nodesRef.current = [createNode(cx, cy, selectedArchetype)];
+      nodesRef.current = [createNode(cx, cy, archetypeRef.current)];
   }, []);
 
   const spawnParticles = (x: number, y: number, color: string, count: number = 5) => {
@@ -81,17 +89,17 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
                   const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
                   grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
                   grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
-                  
+
                   ctx.strokeStyle = grad;
                   ctx.beginPath();
                   ctx.moveTo(node.pos.x, node.pos.y);
-                  
+
                   // Slight curve
                   const midX = (node.pos.x + target.pos.x) / 2;
                   const midY = (node.pos.y + target.pos.y) / 2;
                   // Jitter for neural look
                   ctx.quadraticCurveTo(midX + (Math.random()-0.5)*2, midY + (Math.random()-0.5)*2, target.pos.x, target.pos.y);
-                  
+
                   ctx.stroke();
               }
           });
@@ -101,7 +109,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
       nodes.forEach(node => {
           const glow = Math.max(0, Math.min(1, node.energy / 100));
           const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
-          
+
           ctx.beginPath();
           ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
           ctx.fillStyle = color;
@@ -113,17 +121,14 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
           ctx.fillStyle = '#fff';
           ctx.fill();
 
-          // Interaction Highlight
+          // Interaction Highlight (energy feeding happens in updatePhysics)
           if (mouseRef.current) {
               const d = Math.hypot(mouseRef.current.x - node.pos.x, mouseRef.current.y - node.pos.y);
-              if (d < 30) {
+              if (d < ATTENTION_RADIUS) {
                   ctx.beginPath();
                   ctx.arc(node.pos.x, node.pos.y, node.radius * 2, 0, Math.PI * 2);
                   ctx.strokeStyle = 'white';
                   ctx.stroke();
-                  
-                  // Feed energy on hover
-                  node.energy = Math.min(100, node.energy + 1);
               }
           }
       });
@@ -148,28 +153,33 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const { width, height } = canvas;
+      // Work in CSS pixels; the canvas backing store is scaled by devicePixelRatio
+      const { width, height } = sizeRef.current;
+      const dt = lastFrameRef.current === null ? 1 : Math.min((time - lastFrameRef.current) / FRAME_MS, MAX_DT);
+      lastFrameRef.current = time;
 
       // Update Physics
       const result = updatePhysics(
-          nodesRef.current, 
-          particlesRef.current, 
-          width, 
+          nodesRef.current,
+          particlesRef.current,
+          width,
           height,
-          (x, y) => {
+          dt,
+          mouseRef.current,
+          (x, y, type) => {
               // On Synthesis/Birth Callback
               spawnParticles(x, y, '#fff', 8);
-              
+
               // Throttle audio: Only play if 80ms have passed since last tone
               // This limits automatic audio to ~12 notes/sec max
               const now = Date.now();
               if (now - lastAudioTimeRef.current > 80) {
-                  playTone(nodesRef.current[nodesRef.current.length-1]?.type || selectedArchetype, 0.4);
+                  playTone(type, 0.4);
                   lastAudioTimeRef.current = now;
               }
           }
       );
-      
+
       nodesRef.current = result.nodes;
       particlesRef.current = result.particles;
 
@@ -179,38 +189,43 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
 
   useEffect(() => {
       const handleResize = () => {
-          if (containerRef.current && canvasRef.current) {
-              canvasRef.current.width = window.innerWidth;
-              canvasRef.current.height = window.innerHeight;
-          }
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          const dpr = window.devicePixelRatio || 1;
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          sizeRef.current = { width, height };
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+          canvas.style.width = `${width}px`;
+          canvas.style.height = `${height}px`;
+          canvas.getContext('2d')?.setTransform(dpr, 0, 0, dpr, 0, 0);
       };
-      
+
       window.addEventListener('resize', handleResize);
       handleResize();
+      lastFrameRef.current = null;
       requestRef.current = requestAnimationFrame(animate);
 
       return () => {
           window.removeEventListener('resize', handleResize);
           cancelAnimationFrame(requestRef.current);
       };
-  }, [selectedArchetype]); 
+  }, []);
 
-  const handleInteraction = (e: React.MouseEvent | React.TouchEvent) => {
-      // Normalize coordinate
-      let cx, cy;
-      if ('touches' in e) {
-          cx = e.touches[0].clientX;
-          cy = e.touches[0].clientY;
-      } else {
-          cx = (e as React.MouseEvent).clientX;
-          cy = (e as React.MouseEvent).clientY;
-      }
+  // Pointer events cover mouse, touch and pen without the touch→mouse double fire
+  const handlePointerDown = (e: React.PointerEvent) => {
+      const cx = e.clientX;
+      const cy = e.clientY;
+      // On touch there's no hover, so holding a finger down pays attention instead
+      mouseRef.current = { x: cx, y: cy };
+      const archetype = archetypeRef.current;
 
       // Check click on node
       let clickedNode = false;
       for (const node of nodesRef.current) {
           const d = Math.hypot(cx - node.pos.x, cy - node.pos.y);
-          if (d < 30) {
+          if (d < ATTENTION_RADIUS) {
               // Stimulate
               node.energy = 100;
               node.vel.x += (Math.random()-0.5) * 5;
@@ -223,25 +238,35 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
 
       if (!clickedNode) {
           // Plant new Idea
-          const newNode = createNode(cx, cy, selectedArchetype);
+          const newNode = createNode(cx, cy, archetype);
           newNode.energy = 100;
           nodesRef.current.push(newNode);
           spawnParticles(cx, cy, '#fff', 15);
-          playTone(selectedArchetype, 0.8);
+          playTone(archetype, 0.8);
       }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
+      // Touch only "pays attention" while the finger is down
+      if (e.pointerType === 'touch' && e.buttons === 0) return;
       mouseRef.current = { x: e.clientX, y: e.clientY };
   };
 
+  const handlePointerEnd = (e: React.PointerEvent) => {
+      if (e.type === 'pointerleave' || e.pointerType === 'touch') {
+          mouseRef.current = null;
+      }
+  };
+
   return (
-    <div ref={containerRef} className="fixed inset-0 cursor-crosshair">
+    <div className="fixed inset-0 cursor-crosshair">
       <canvas
         ref={canvasRef}
-        onMouseDown={handleInteraction}
-        onTouchStart={handleInteraction}
-        onMouseMove={handleMouseMove}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onPointerLeave={handlePointerEnd}
         className="block"
       />
     </div>
