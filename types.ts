@@ -44,3 +44,23 @@ export type SimEvent =
   | { kind: 'split'; x: number; y: number; node: IdeaNode }
   | { kind: 'synthesis'; x: number; y: number; a: IdeaNode; b: IdeaNode }
   | { kind: 'hybrid'; x: number; y: number; node: IdeaNode };
+
+export interface SessionStats {
+  startedAt: number;
+  duration: number; // ms
+  alive: number;
+  hybridsAlive: number;
+  peakAlive: number;
+  maxGeneration: number;
+  largestNetwork: number;
+  maxBlend: number;
+  bonds: number;
+  hybridsBorn: number;
+}
+
+export interface Insight {
+  id: string;
+  title: string;
+  description: string;
+  test: (stats: SessionStats) => boolean;
+}

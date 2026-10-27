@@ -1,19 +1,26 @@
 
 import React, { useRef, useEffect } from 'react';
-import { IdeaNode, Particle, Archetype } from '../types';
+import { IdeaNode, Particle, Archetype, SessionStats, Insight } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { playTone, playBlend } from '../utils/audio';
+import { largestNetwork } from '../utils/stats';
+import { INSIGHTS } from '../insights';
 
 interface BoardProps {
   selectedArchetype: Archetype;
+  onStats: (stats: SessionStats) => void;
+  onInsight: (insight: Insight) => void;
+  onExtinct: (stats: SessionStats) => void;
 }
 
 // Frame duration the physics constants were tuned for (60fps)
 const FRAME_MS = 1000 / 60;
 // Cap dt so a backgrounded tab doesn't make the simulation jump
 const MAX_DT = 3;
+// How often stats are pushed to the UI
+const STATS_INTERVAL_MS = 250;
 
-export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
+export const Board: React.FC<BoardProps> = ({ selectedArchetype, onStats, onInsight, onExtinct }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Game State Refs (Mutable for high-performance loop)
@@ -27,6 +34,22 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
   // Read by the animation loop, so the loop doesn't restart when the archetype changes
   const archetypeRef = useRef(selectedArchetype);
   archetypeRef.current = selectedArchetype;
+  const callbacksRef = useRef({ onStats, onInsight, onExtinct });
+  callbacksRef.current = { onStats, onInsight, onExtinct };
+
+  // Session bookkeeping (counters the simulation itself doesn't keep)
+  const sessionRef = useRef({
+      startedAt: Date.now(),
+      peakAlive: 0,
+      maxGeneration: 0,
+      largestNetwork: 0,
+      maxBlend: 1,
+      bonds: 0,
+      hybridsBorn: 0,
+      unlocked: new Set<string>(),
+      lastStatsAt: 0,
+      extinct: false,
+  });
 
   // Initialize
   useEffect(() => {
@@ -147,6 +170,49 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
       ctx.globalCompositeOperation = 'source-over';
   };
 
+  const reportStats = () => {
+      const session = sessionRef.current;
+      const now = Date.now();
+      if (session.extinct || now - session.lastStatsAt < STATS_INTERVAL_MS) return;
+      session.lastStatsAt = now;
+
+      const nodes = nodesRef.current;
+      let hybridsAlive = 0;
+      for (const n of nodes) {
+          session.maxGeneration = Math.max(session.maxGeneration, n.generation);
+          session.maxBlend = Math.max(session.maxBlend, n.blend.length);
+          if (n.blend.length > 1) hybridsAlive++;
+      }
+      session.peakAlive = Math.max(session.peakAlive, nodes.length);
+      session.largestNetwork = Math.max(session.largestNetwork, largestNetwork(nodes));
+
+      const stats: SessionStats = {
+          startedAt: session.startedAt,
+          duration: now - session.startedAt,
+          alive: nodes.length,
+          hybridsAlive,
+          peakAlive: session.peakAlive,
+          maxGeneration: session.maxGeneration,
+          largestNetwork: session.largestNetwork,
+          maxBlend: session.maxBlend,
+          bonds: session.bonds,
+          hybridsBorn: session.hybridsBorn,
+      };
+
+      const { onStats, onInsight, onExtinct } = callbacksRef.current;
+      onStats(stats);
+      for (const insight of INSIGHTS) {
+          if (!session.unlocked.has(insight.id) && insight.test(stats)) {
+              session.unlocked.add(insight.id);
+              onInsight(insight);
+          }
+      }
+      if (nodes.length === 0) {
+          session.extinct = true;
+          onExtinct(stats);
+      }
+  };
+
   const animate = (time: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -168,7 +234,9 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
           mouseRef.current,
           (event) => {
               const now = Date.now();
+              if (event.kind === 'synthesis') sessionRef.current.bonds++;
               if (event.kind === 'hybrid') {
+                  sessionRef.current.hybridsBorn++;
                   // A new kind of idea: always celebrate it
                   spawnParticles(event.x, event.y, `hsl(${event.node.hue}, 100%, 70%)`, 24);
                   playBlend(event.node.blend, 0.9);
@@ -191,6 +259,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype }) => {
 
       nodesRef.current = result.nodes;
       particlesRef.current = result.particles;
+      reportStats();
 
       draw(ctx, width, height);
       requestRef.current = requestAnimationFrame(animate);

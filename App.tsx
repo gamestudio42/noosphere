@@ -1,13 +1,38 @@
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
-import { Archetype } from './types';
+import { Hud } from './components/Hud';
+import { InsightToasts } from './components/InsightToasts';
+import { ExtinctionScreen } from './components/ExtinctionScreen';
+import { Archetype, Insight, SessionStats } from './types';
 import { BrainCircuit } from 'lucide-react';
+
+const TOAST_MS = 4500;
 
 const App: React.FC = () => {
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype>('RATIONAL');
   const [started, setStarted] = useState(false);
+  const [sessionKey, setSessionKey] = useState(0);
+  const [stats, setStats] = useState<SessionStats | null>(null);
+  const [unlocked, setUnlocked] = useState<Insight[]>([]);
+  const [toasts, setToasts] = useState<{ key: number; insight: Insight }[]>([]);
+  const [extinct, setExtinct] = useState<SessionStats | null>(null);
+
+  const handleInsight = useCallback((insight: Insight) => {
+      setUnlocked(prev => [...prev, insight]);
+      const key = Date.now() + Math.random();
+      setToasts(prev => [...prev, { key, insight }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.key !== key)), TOAST_MS);
+  }, []);
+
+  const restart = () => {
+      setExtinct(null);
+      setStats(null);
+      setUnlocked([]);
+      setToasts([]);
+      setSessionKey(k => k + 1);
+  };
 
   if (!started) {
       return (
@@ -29,8 +54,8 @@ const App: React.FC = () => {
                     An ecosystem of living ideas. <br/>
                     Plant. Observe. Connect.
                  </p>
-                 
-                 <button 
+
+                 <button
                     onClick={() => setStarted(true)}
                     className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-white/60 transition-colors"
                  >
@@ -44,29 +69,29 @@ const App: React.FC = () => {
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-white overflow-hidden">
-      
-      {/* UI Overlay */}
-      <div className="absolute top-6 left-6 z-40 pointer-events-none">
-          <h1 className="text-2xl font-bold tracking-tight opacity-50">NOOSPHERE</h1>
-          <p className="text-xs text-stone-500 tracking-widest mt-1">SIMULATION RUNNING...</p>
-      </div>
 
-      <div className="absolute top-6 right-6 z-40 pointer-events-none text-right">
-          <p className="text-xs text-stone-500 max-w-[200px]">
-              Click to plant an idea.<br/>
-              Hover to pay attention.<br/>
-              Ideas die when forgotten.
-          </p>
-      </div>
+      {/* UI Overlay */}
+      <Hud stats={stats} unlockedCount={unlocked.length} />
+      <InsightToasts toasts={toasts} />
 
       {/* Main Simulation */}
-      <Board selectedArchetype={selectedArchetype} />
+      <Board
+        key={sessionKey}
+        selectedArchetype={selectedArchetype}
+        onStats={setStats}
+        onInsight={handleInsight}
+        onExtinct={setExtinct}
+      />
 
       {/* Controls */}
-      <Controls 
+      <Controls
         selectedArchetype={selectedArchetype}
         onSelect={setSelectedArchetype}
       />
+
+      {extinct && (
+        <ExtinctionScreen stats={extinct} insights={unlocked} onRestart={restart} />
+      )}
 
     </div>
   );
