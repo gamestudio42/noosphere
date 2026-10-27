@@ -9,10 +9,12 @@ import { ChapterCard } from './components/ChapterCard';
 import { ExtinctionScreen } from './components/ExtinctionScreen';
 import { MindTools } from './components/MindTools';
 import { FocusBar } from './components/FocusBar';
+import { MainMenu } from './components/MainMenu';
 import { exportCanvas } from './utils/renderer';
-import { hasSavedMind, loadCampaign, saveCampaign } from './utils/persistence';
+import { clearCampaign, clearMind, loadCampaign, saveCampaign } from './utils/persistence';
 import { playCue } from './utils/audio';
-import { Archetype, Insight, SessionStats } from './types';
+import { ARCHETYPE_ORDER } from './constants';
+import { Archetype, GameMode, GameRules, Insight, SessionStats } from './types';
 import {
   CampaignState,
   Chapter,
@@ -23,14 +25,14 @@ import {
   rulesFor,
   unlockedArchetypes,
 } from './campaign';
-import { BrainCircuit } from 'lucide-react';
 
 const TOAST_MS = 4500;
+// The sandbox: everything unlocked, nothing costs anything
+const FREE_RULES: GameRules = { focus: false, doubts: false };
 
 const App: React.FC = () => {
   const [selectedArchetype, setSelectedArchetype] = useState<Archetype>('RATIONAL');
-  const [started, setStarted] = useState(false);
-  const [resumable] = useState(hasSavedMind);
+  const [mode, setMode] = useState<GameMode | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [unlocked, setUnlocked] = useState<Insight[]>([]);
@@ -44,8 +46,9 @@ const App: React.FC = () => {
   // Title card for the chapter that just began; undefined hides it, null ends the campaign
   const [card, setCard] = useState<{ key: number; chapter: Chapter | null } | undefined>(undefined);
 
-  const rules = rulesFor(campaign);
-  const available = unlockedArchetypes(campaign);
+  const inCampaign = mode === 'campaign';
+  const rules = inCampaign ? rulesFor(campaign) : FREE_RULES;
+  const available = inCampaign ? unlockedArchetypes(campaign) : ARCHETYPE_ORDER;
   const archetype = available.includes(selectedArchetype) ? selectedArchetype : available[0];
 
   const updateCampaign = (next: CampaignState) => {
@@ -64,6 +67,7 @@ const App: React.FC = () => {
 
   const handleStats = (next: SessionStats) => {
       setStats(next);
+      if (!inCampaign) return;
       const update = advanceCampaign(campaignRef.current, next);
       if (update.state === campaignRef.current) return;
       updateCampaign(update.state);
@@ -84,64 +88,57 @@ const App: React.FC = () => {
       pushToast({ kind: 'insight', title: insight.title, description: insight.description });
   }, [pushToast]);
 
-  const restart = () => {
+  const resetSession = () => {
       setExtinct(null);
       setStats(null);
       setUnlocked([]);
       setToasts([]);
-      updateCampaign(restartChapter(campaignRef.current));
+      setCard(undefined);
       setSessionKey(k => k + 1);
   };
 
-  const start = () => {
-      setStarted(true);
-      // Fresh campaigns and returning players both get the current chapter's card
-      showCard(currentChapter(campaignRef.current));
+  const restart = () => {
+      if (inCampaign) updateCampaign(restartChapter(campaignRef.current));
+      resetSession();
   };
 
-  if (!started) {
-      return (
-          <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
-             {/* Intro Animation Background */}
-             <div className="absolute inset-0 opacity-20 pointer-events-none">
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500 rounded-full blur-[100px] animate-pulse"></div>
-                 <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500 rounded-full blur-[80px] animate-bounce duration-[5s]"></div>
-             </div>
+  const play = (next: GameMode) => {
+      resetSession();
+      setMode(next);
+      // Fresh campaigns and returning players both get the current chapter's card
+      if (next === 'campaign') showCard(currentChapter(campaignRef.current));
+  };
 
-             <div className="relative z-10 max-w-xl">
-                 <div className="mx-auto w-16 h-16 mb-6 text-cyan-400">
-                    <BrainCircuit size={64} strokeWidth={1} />
-                 </div>
-                 <h1 className="text-6xl font-light mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 to-purple-200">
-                    NOOSPHERE
-                 </h1>
-                 <p className="text-xl text-stone-400 font-light mb-12 tracking-wide">
-                    An ecosystem of living ideas. <br/>
-                    Plant. Observe. Connect.
-                 </p>
+  const goHome = () => {
+      resetSession();
+      setMode(null);
+  };
 
-                 <button
-                    onClick={start}
-                    className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-white/60 transition-colors"
-                 >
-                     <div className="absolute inset-0 w-full h-full bg-white/5 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
-                     <span className="relative text-sm font-bold uppercase tracking-[0.3em]">{resumable ? 'Return To The Mind' : 'Enter The Mind'}</span>
-                 </button>
-             </div>
-          </div>
-      );
+  const resetCampaign = () => {
+      clearMind('campaign');
+      clearCampaign();
+      updateCampaign(newCampaign());
+  };
+
+  if (!mode) {
+      return <MainMenu campaign={campaign} onPlay={play} onResetCampaign={resetCampaign} />;
   }
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-white overflow-hidden">
 
       {/* UI Overlay */}
-      <Hud stats={stats} unlockedCount={unlocked.length} objectives={<Objectives campaign={campaign} stats={stats} />} />
+      <Hud
+        stats={stats}
+        unlockedCount={unlocked.length}
+        objectives={inCampaign ? <Objectives campaign={campaign} stats={stats} /> : undefined}
+      />
       <InsightToasts toasts={toasts} />
 
       {/* Main Simulation */}
       <Board
-        key={sessionKey}
+        key={`${mode}-${sessionKey}`}
+        mode={mode}
         selectedArchetype={archetype}
         rules={rules}
         onStats={handleStats}
@@ -154,19 +151,24 @@ const App: React.FC = () => {
 
       {rules.focus && stats && <FocusBar focus={stats.focus} deniedAt={deniedAt} />}
 
-      {/* Controls */}
       {card && <ChapterCard key={card.key} chapter={card.chapter} onDone={() => setCard(undefined)} />}
 
+      {/* Controls */}
       <Controls
         selectedArchetype={archetype}
         available={available}
         onSelect={setSelectedArchetype}
       />
 
-      <MindTools onExport={() => canvasRef.current && exportCanvas(canvasRef.current)} />
+      <MindTools onHome={goHome} onExport={() => canvasRef.current && exportCanvas(canvasRef.current)} />
 
       {extinct && (
-        <ExtinctionScreen stats={extinct} insights={unlocked} onRestart={restart} restartLabel="Retry this chapter" />
+        <ExtinctionScreen
+          stats={extinct}
+          insights={unlocked}
+          onRestart={restart}
+          restartLabel={inCampaign ? 'Retry this chapter' : 'Plant a new mind'}
+        />
       )}
 
     </div>

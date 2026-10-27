@@ -1,9 +1,11 @@
 
-import { Doubt, IdeaNode } from '../types';
+import { Doubt, GameMode, IdeaNode } from '../types';
 import { blendTraits, normalizeBlend } from './gameLogic';
 import { CampaignState } from '../campaign';
 
-const KEY = 'noosphere:mind:v1';
+// Each mode keeps its own mind. v1 saves predate modes and were sandboxes.
+const keyFor = (mode: GameMode) => `noosphere:mind:v2:${mode}`;
+const LEGACY_KEY = 'noosphere:mind:v1';
 
 export interface SavedMind {
   savedAt: number;
@@ -30,25 +32,27 @@ export interface SavedMind {
 
 // Browser storage can be missing or throw (private mode, blocked site data),
 // so every access is guarded and failure just means "no saved mind".
-export const saveMind = (mind: SavedMind) => {
+export const saveMind = (mode: GameMode, mind: SavedMind) => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(mind));
+    localStorage.setItem(keyFor(mode), JSON.stringify(mind));
+    if (mode === 'free') localStorage.removeItem(LEGACY_KEY);
   } catch {
     // ignore
   }
 };
 
-export const clearMind = () => {
+export const clearMind = (mode: GameMode) => {
   try {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(keyFor(mode));
+    if (mode === 'free') localStorage.removeItem(LEGACY_KEY);
   } catch {
     // ignore
   }
 };
 
-export const loadMind = (): SavedMind | null => {
+export const loadMind = (mode: GameMode): SavedMind | null => {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(keyFor(mode)) ?? (mode === 'free' ? localStorage.getItem(LEGACY_KEY) : null);
     if (!raw) return null;
     const mind = JSON.parse(raw) as SavedMind;
     if (!Array.isArray(mind.nodes)) return null;
@@ -67,7 +71,7 @@ export const loadMind = (): SavedMind | null => {
   }
 };
 
-export const hasSavedMind = () => loadMind() !== null;
+export const hasSavedMind = (mode: GameMode) => loadMind(mode) !== null;
 
 const CAMPAIGN_KEY = 'noosphere:campaign:v1';
 

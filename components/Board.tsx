@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { IdeaNode, Particle, Archetype, SessionStats, Insight, GameRules, Doubt } from '../types';
+import { IdeaNode, Particle, Archetype, SessionStats, Insight, GameRules, GameMode, Doubt } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { PHYSICS, FOCUS, DOUBT } from '../constants';
 import { playTone, playBlend, playCue, setAmbience } from '../utils/audio';
@@ -12,6 +12,7 @@ import { INSIGHTS } from '../insights';
 import { saveMind, loadMind, clearMind } from '../utils/persistence';
 
 interface BoardProps {
+  mode: GameMode; // which saved mind to resume and write
   selectedArchetype: Archetype;
   rules: GameRules;
   onStats: (stats: SessionStats) => void;
@@ -31,7 +32,7 @@ const STATS_INTERVAL_MS = 250;
 // How often the mind is saved to local storage
 const SAVE_INTERVAL_MS = 5000;
 
-export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats, onInsight, onExtinct, onRestore, onDenied, canvasRef }) => {
+export const Board: React.FC<BoardProps> = ({ mode, selectedArchetype, rules, onStats, onInsight, onExtinct, onRestore, onDenied, canvasRef }) => {
 
   // Game State Refs (Mutable for high-performance loop)
   const nodesRef = useRef<IdeaNode[]>([]);
@@ -77,7 +78,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
 
   // Initialize: resume the saved mind, or seed the initial thought
   useEffect(() => {
-      const saved = loadMind();
+      const saved = loadMind(mode);
       if (saved) {
           const sx = window.innerWidth / saved.width;
           const sy = window.innerHeight / saved.height;
@@ -104,14 +105,14 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
       nodesRef.current = [createNode(cx, cy, archetypeRef.current)];
-  }, []);
+  }, [mode]);
 
   // Persist the mind periodically and when the page is hidden or closed
   useEffect(() => {
       const save = () => {
           const session = sessionRef.current;
           if (session.extinct || nodesRef.current.length === 0) return;
-          saveMind({
+          saveMind(mode, {
               savedAt: Date.now(),
               width: sizeRef.current.width,
               height: sizeRef.current.height,
@@ -139,11 +140,13 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       document.addEventListener('visibilitychange', onHide);
       window.addEventListener('pagehide', save);
       return () => {
+          // Leaving for the menu unmounts the board: keep the mind
+          save();
           window.clearInterval(interval);
           document.removeEventListener('visibilitychange', onHide);
           window.removeEventListener('pagehide', save);
       };
-  }, []);
+  }, [mode]);
 
   const spawnParticles = (x: number, y: number, color: string, count: number = 5) => {
       // Safety Cap: Don't spawn if too many particles exist
@@ -212,7 +215,7 @@ export const Board: React.FC<BoardProps> = ({ selectedArchetype, rules, onStats,
       if (nodes.length === 0) {
           session.extinct = true;
           setAmbience(0);
-          clearMind();
+          clearMind(mode);
           onExtinct(stats);
       }
   };

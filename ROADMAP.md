@@ -20,11 +20,11 @@ cohesive, and a game that holds attention, not just a toy.
 
 ## Phase 1: make it a game
 
-- [ ] **Focus** as a resource: planting, stimulating and feeding ideas spend it, it regenerates over time and faster with living hybrids.
-- [ ] **Doubts**: threats that drift in, latch onto ideas and drain them. Click to banish them; Logic ideas slowly dissolve them; well connected ideas resist.
-- [ ] **Chapters** with objectives that unlock archetypes and mechanics one at a time, teaching the game by playing it.
-- [ ] Campaign progress saved; extinction retries the current chapter.
-- [ ] **Free mode**: the original sandbox, no focus cost and no doubts.
+- [x] **Focus** as a resource: planting, stimulating and feeding ideas spend it, it regenerates over time and faster with living hybrids.
+- [x] **Doubts**: threats that drift in, latch onto ideas and drain them. Click to banish them; Logic ideas slowly dissolve them; well connected ideas resist.
+- [x] **Chapters** with objectives that unlock archetypes and mechanics one at a time, teaching the game by playing it.
+- [x] Campaign progress saved; extinction retries the current chapter.
+- [x] **Free mode**: the original sandbox, no focus cost and no doubts.
 
 ## Phase 2: visuals and game feel
 

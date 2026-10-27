@@ -75,6 +75,8 @@ export interface SessionStats {
   doubtsDissolved: number; // by Logic ideas
 }
 
+export type GameMode = 'campaign' | 'free';
+
 // What the current mode or chapter switches on
 export interface GameRules {
   focus: boolean;  // actions cost focus
