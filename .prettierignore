@@ -1,0 +1,7 @@
+dist
+node_modules
+package-lock.json
+docs/screenshots
+# Vendorised by gs42-standards and pinned by .gs42/standards.lock: reformatting
+# these files would break the integrity check.
+.gs42/standards
