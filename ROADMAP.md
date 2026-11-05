@@ -5,18 +5,18 @@ cohesive, and a game that holds attention, not just a toy.
 
 ## Assessment (2026-10)
 
-| Area | Score | Notes |
-| --- | --- | --- |
-| Engineering | 7/10 | Tests, CI, frame-rate independent physics, saves. Missing a fixed timestep and spatial hashing. |
-| Game design | 3/10 | A toy, not a game: planting is free and unlimited, no goals, threats or progression beyond 8 one-off insights. |
-| Onboarding | 2/10 | The intro drops you into an empty screen. Hybrids and affinities are never taught. |
-| Visuals | 5/10 | Pretty but generic Canvas 2D glow circles. No real bloom, depth, living background or hero moments. |
-| Game feel | 3/10 | No screen shake, slow motion or birth animations. Weak click feedback. |
-| Audio | 4/10 | Loose oscillators, not locked to a scale or pulse. No adaptive music. |
-| UI | 4/10 | No pause menu, settings, fullscreen or keyboard shortcuts. |
-| Accessibility | 3/10 | Archetypes differ by colour only. Not keyboard playable. Reduced motion handled. |
-| Content | 3/10 | 4 archetypes, 8 insights, one mode. |
-| Platform | 4/10 | No PWA/offline, touch untested, English only. |
+| Area          | Score | Notes                                                                                                          |
+| ------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| Engineering   | 7/10  | Tests, CI, frame-rate independent physics, saves. Missing a fixed timestep and spatial hashing.                |
+| Game design   | 3/10  | A toy, not a game: planting is free and unlimited, no goals, threats or progression beyond 8 one-off insights. |
+| Onboarding    | 2/10  | The intro drops you into an empty screen. Hybrids and affinities are never taught.                             |
+| Visuals       | 5/10  | Pretty but generic Canvas 2D glow circles. No real bloom, depth, living background or hero moments.            |
+| Game feel     | 3/10  | No screen shake, slow motion or birth animations. Weak click feedback.                                         |
+| Audio         | 4/10  | Loose oscillators, not locked to a scale or pulse. No adaptive music.                                          |
+| UI            | 4/10  | No pause menu, settings, fullscreen or keyboard shortcuts.                                                     |
+| Accessibility | 3/10  | Archetypes differ by colour only. Not keyboard playable. Reduced motion handled.                               |
+| Content       | 3/10  | 4 archetypes, 8 insights, one mode.                                                                            |
+| Platform      | 4/10  | No PWA/offline, touch untested, English only.                                                                  |
 
 ## Phase 1: make it a game
 

@@ -65,12 +65,12 @@ Two ways in: the campaign, or the sandbox with no focus cost.
 
 ### Archetypes
 
-| Archetype | Behaviour |
-| --- | --- |
-| Logic | Fades slowly and builds stable structures; dissolves doubts nearby |
-| Feeling | Bonds easily with everything nearby |
-| Chaos | Multiplies fast, burns out fast |
-| Instinct | Heavy and slow, pulls other ideas in |
+| Archetype | Behaviour                                                          |
+| --------- | ------------------------------------------------------------------ |
+| Logic     | Fades slowly and builds stable structures; dissolves doubts nearby |
+| Feeling   | Bonds easily with everything nearby                                |
+| Chaos     | Multiplies fast, burns out fast                                    |
+| Instinct  | Heavy and slow, pulls other ideas in                               |
 
 Each pair of archetypes has an affinity that draws them together or pushes them apart (see
 `AFFINITY` in `constants.ts`).
@@ -93,17 +93,17 @@ Open **[gamestudio42.github.io/noosphere](https://gamestudio42.github.io/noosphe
 **BEGIN** to learn the mind chapter by chapter, or **FREE MIND** for the sandbox. The interface is
 in English; contextual hints explain each mechanic the first time it matters.
 
-| Action | How |
-| --- | --- |
-| Choose a mode | **BEGIN** (campaign) or **FREE MIND** (sandbox) |
-| Plant an idea | click empty space (spends focus) |
-| Feed an idea | hover it, or hold a finger on it |
-| Stimulate an idea | click it for a burst of energy |
-| Banish a doubt | click it |
-| Change archetype | the four archetype buttons on the left |
-| Back to menu | the home button (the mind is saved) |
-| Mute / unmute | the speaker button |
-| Save a portrait | the image button (PNG of the current mind) |
+| Action            | How                                             |
+| ----------------- | ----------------------------------------------- |
+| Choose a mode     | **BEGIN** (campaign) or **FREE MIND** (sandbox) |
+| Plant an idea     | click empty space (spends focus)                |
+| Feed an idea      | hover it, or hold a finger on it                |
+| Stimulate an idea | click it for a burst of energy                  |
+| Banish a doubt    | click it                                        |
+| Change archetype  | the four archetype buttons on the left          |
+| Back to menu      | the home button (the mind is saved)             |
+| Mute / unmute     | the speaker button                              |
+| Save a portrait   | the image button (PNG of the current mind)      |
 
 There are no keyboard shortcuts yet — that is on the roadmap. The view respects
 `prefers-reduced-motion`: no trails, sway or particles when it is set.
@@ -117,11 +117,11 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-| Command | Purpose |
-| --- | --- |
-| `npm run check` | Type check, lint and the Vitest suite (34 tests) |
-| `npm run build` | Static build in `dist/`, relative paths, runs from any folder |
-| `npm run preview` | Serves the built site locally |
+| Command           | Purpose                                                       |
+| ----------------- | ------------------------------------------------------------- |
+| `npm run check`   | Type check, lint and the Vitest suite (34 tests)              |
+| `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
+| `npm run preview` | Serves the built site locally                                 |
 
 The simulation lives in `utils/gameLogic.ts` and is pure apart from the swappable RNG in
 `utils/random.ts`. `utils/renderer.ts` draws the canvas and exports the PNG, `utils/audio.ts` plays

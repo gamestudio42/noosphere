@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Insight, SessionStats } from '../types';
 import { INSIGHTS } from '../insights';
@@ -11,7 +10,12 @@ interface ExtinctionScreenProps {
   restartLabel?: string;
 }
 
-export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({ stats, insights, onRestart, restartLabel = 'Plant a new mind' }) => {
+export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({
+  stats,
+  insights,
+  onRestart,
+  restartLabel = 'Plant a new mind',
+}) => {
   const rows: [string, React.ReactNode][] = [
     ['Mind age', formatDuration(stats.duration)],
     ['Most ideas at once', stats.peakAlive],
@@ -40,8 +44,8 @@ export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({ stats, insig
           Insights {insights.length}/{INSIGHTS.length}
         </p>
         <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {INSIGHTS.map(insight => {
-            const got = insights.some(i => i.id === insight.id);
+          {INSIGHTS.map((insight) => {
+            const got = insights.some((i) => i.id === insight.id);
             return (
               <span
                 key={insight.id}

@@ -1,4 +1,3 @@
-
 import { Doubt, IdeaNode, Particle, Vector2 } from '../types';
 import { ATTENTION_RADIUS } from './gameLogic';
 import { doubtRadius } from './doubts';
@@ -20,7 +19,7 @@ interface FrameOptions {
 const phaseFor = (key: string) => {
   let h = 0;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
-  return ((h >>> 0) % 1000) / 1000 * Math.PI * 2;
+  return (((h >>> 0) % 1000) / 1000) * Math.PI * 2;
 };
 
 export const drawFrame = (
@@ -28,7 +27,7 @@ export const drawFrame = (
   nodes: IdeaNode[],
   particles: Particle[],
   doubts: Doubt[],
-  { width, height, time, attention, reducedMotion }: FrameOptions
+  { width, height, time, attention, reducedMotion }: FrameOptions,
 ) => {
   // The canvas is transparent over a CSS background. Fading alpha with
   // destination-out leaves trails that fully vanish, unlike painting a
@@ -52,98 +51,108 @@ export const drawFrame = (
   // When we have 150 nodes, finding by ID in a loop creates lag (O(N^2) or worse).
   const nodeMap = new Map<string, IdeaNode>();
   for (const n of nodes) {
-      nodeMap.set(n.id, n);
+    nodeMap.set(n.id, n);
   }
 
   // Draw Connections (Synapses)
   ctx.lineWidth = 1;
   const drawnConnections = new Set<string>();
 
-  nodes.forEach(node => {
-      node.connections.forEach(targetId => {
-          const target = nodeMap.get(targetId); // O(1) Lookup
-          if (!target) return;
-          const key = node.id < target.id ? `${node.id}-${target.id}` : `${target.id}-${node.id}`;
-          if (drawnConnections.has(key)) return;
-          drawnConnections.add(key);
+  nodes.forEach((node) => {
+    node.connections.forEach((targetId) => {
+      const target = nodeMap.get(targetId); // O(1) Lookup
+      if (!target) return;
+      const key = node.id < target.id ? `${node.id}-${target.id}` : `${target.id}-${node.id}`;
+      if (drawnConnections.has(key)) return;
+      drawnConnections.add(key);
 
-          // Safety check for gradients
-          const energyA = Math.max(0, Math.min(1, node.energy / 100));
-          const energyB = Math.max(0, Math.min(1, target.energy / 100));
+      // Safety check for gradients
+      const energyA = Math.max(0, Math.min(1, node.energy / 100));
+      const energyB = Math.max(0, Math.min(1, target.energy / 100));
 
-          const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
-          grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
-          grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
+      const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
+      grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
+      grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
 
-          ctx.strokeStyle = grad;
-          ctx.beginPath();
-          ctx.moveTo(node.pos.x, node.pos.y);
+      ctx.strokeStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(node.pos.x, node.pos.y);
 
-          // Gentle curve that sways perpendicular to the synapse
-          const dx = target.pos.x - node.pos.x;
-          const dy = target.pos.y - node.pos.y;
-          const len = Math.hypot(dx, dy) || 1;
-          const sway = reducedMotion ? 0 : Math.min(8, len * 0.08) * Math.sin(time * 0.0015 + phaseFor(key));
-          const midX = (node.pos.x + target.pos.x) / 2 - (dy / len) * sway;
-          const midY = (node.pos.y + target.pos.y) / 2 + (dx / len) * sway;
-          ctx.quadraticCurveTo(midX, midY, target.pos.x, target.pos.y);
+      // Gentle curve that sways perpendicular to the synapse
+      const dx = target.pos.x - node.pos.x;
+      const dy = target.pos.y - node.pos.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const sway = reducedMotion
+        ? 0
+        : Math.min(8, len * 0.08) * Math.sin(time * 0.0015 + phaseFor(key));
+      const midX = (node.pos.x + target.pos.x) / 2 - (dy / len) * sway;
+      const midY = (node.pos.y + target.pos.y) / 2 + (dx / len) * sway;
+      ctx.quadraticCurveTo(midX, midY, target.pos.x, target.pos.y);
 
-          ctx.stroke();
-      });
+      ctx.stroke();
+    });
   });
 
   // Draw Nodes
-  nodes.forEach(node => {
-      const glow = Math.max(0, Math.min(1, node.energy / 100));
-      const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
+  nodes.forEach((node) => {
+    const glow = Math.max(0, Math.min(1, node.energy / 100));
+    const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
 
+    ctx.beginPath();
+    ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Hybrids get a ring so they read as a different kind of idea
+    if (node.blend.length > 1) {
       ctx.beginPath();
-      ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
+      ctx.arc(node.pos.x, node.pos.y, node.radius * 1.6, 0, Math.PI * 2);
+      ctx.strokeStyle = `hsla(${node.hue}, 100%, 75%, ${0.3 + glow * 0.5})`;
+      ctx.stroke();
+    }
 
-      // Hybrids get a ring so they read as a different kind of idea
-      if (node.blend.length > 1) {
-          ctx.beginPath();
-          ctx.arc(node.pos.x, node.pos.y, node.radius * 1.6, 0, Math.PI * 2);
-          ctx.strokeStyle = `hsla(${node.hue}, 100%, 75%, ${0.3 + glow * 0.5})`;
-          ctx.stroke();
-      }
+    // Core
+    ctx.beginPath();
+    ctx.arc(node.pos.x, node.pos.y, node.radius * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
 
-      // Core
+    // Interaction Highlight (energy feeding happens in updatePhysics)
+    if (
+      attention &&
+      Math.hypot(attention.x - node.pos.x, attention.y - node.pos.y) < ATTENTION_RADIUS
+    ) {
       ctx.beginPath();
-      ctx.arc(node.pos.x, node.pos.y, node.radius * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-
-      // Interaction Highlight (energy feeding happens in updatePhysics)
-      if (attention && Math.hypot(attention.x - node.pos.x, attention.y - node.pos.y) < ATTENTION_RADIUS) {
-          ctx.beginPath();
-          ctx.arc(node.pos.x, node.pos.y, node.radius * 2, 0, Math.PI * 2);
-          ctx.strokeStyle = 'white';
-          ctx.stroke();
-      }
+      ctx.arc(node.pos.x, node.pos.y, node.radius * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'white';
+      ctx.stroke();
+    }
   });
 
   // Draw Particles
-  particles.forEach(p => {
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.life;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
-      ctx.fill();
+  particles.forEach((p) => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
+    ctx.fill();
   });
   ctx.globalAlpha = 1.0;
 
   // Doubts are drawn normally (not additively) so they darken what they cover
   ctx.globalCompositeOperation = 'source-over';
-  doubts.forEach(doubt => drawDoubt(ctx, doubt, time, reducedMotion));
+  doubts.forEach((doubt) => drawDoubt(ctx, doubt, time, reducedMotion));
 };
 
 const DOUBT_POINTS = 14;
 
 // A jagged, writhing blot of darkness with a pale rim
-const drawDoubt = (ctx: CanvasRenderingContext2D, doubt: Doubt, time: number, reducedMotion: boolean) => {
+const drawDoubt = (
+  ctx: CanvasRenderingContext2D,
+  doubt: Doubt,
+  time: number,
+  reducedMotion: boolean,
+) => {
   const r = doubtRadius(doubt);
   const t = reducedMotion ? 0 : time * 0.004;
   ctx.beginPath();
@@ -180,7 +189,7 @@ export const exportCanvas = (canvas: HTMLCanvasElement) => {
   ctx.fillStyle = BACKGROUND;
   ctx.fillRect(0, 0, out.width, out.height);
   ctx.drawImage(canvas, 0, 0);
-  out.toBlob(blob => {
+  out.toBlob((blob) => {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { BrainCircuit } from 'lucide-react';
 import { CHAPTERS, CampaignState, currentChapter } from '../campaign';
@@ -11,9 +10,15 @@ interface MainMenuProps {
   onResetCampaign: () => void;
 }
 
-const buttonClass = 'group relative w-72 px-8 py-4 bg-transparent overflow-hidden rounded-full border transition-colors';
+const buttonClass =
+  'group relative w-72 px-8 py-4 bg-transparent overflow-hidden rounded-full border transition-colors';
 
-const MenuButton: React.FC<{ onClick: () => void; primary?: boolean; label: string; detail: string }> = ({ onClick, primary, label, detail }) => (
+const MenuButton: React.FC<{
+  onClick: () => void;
+  primary?: boolean;
+  label: string;
+  detail: string;
+}> = ({ onClick, primary, label, detail }) => (
   <button
     onClick={onClick}
     className={`${buttonClass} ${primary ? 'border-white/30 hover:border-white/70' : 'border-white/10 hover:border-white/40'}`}
@@ -37,47 +42,54 @@ export const MainMenu: React.FC<MainMenuProps> = ({ campaign, onPlay, onResetCam
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
-       {/* Intro Animation Background */}
-       <div className="absolute inset-0 opacity-20 pointer-events-none">
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500 rounded-full blur-[100px] animate-pulse"></div>
-           <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500 rounded-full blur-[80px] animate-bounce duration-[5s]"></div>
-       </div>
+      {/* Intro Animation Background */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500 rounded-full blur-[80px] animate-bounce duration-[5s]"></div>
+      </div>
 
-       <div className="relative z-10 max-w-xl flex flex-col items-center">
-           <div className="mx-auto w-16 h-16 mb-6 text-cyan-400">
-              <BrainCircuit size={64} strokeWidth={1} />
-           </div>
-           <h1 className="text-6xl font-light mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 to-purple-200">
-              NOOSPHERE
-           </h1>
-           <p className="text-xl text-stone-400 font-light mb-12 tracking-wide">
-              An ecosystem of living ideas. <br/>
-              Plant. Observe. Connect.
-           </p>
+      <div className="relative z-10 max-w-xl flex flex-col items-center">
+        <div className="mx-auto w-16 h-16 mb-6 text-cyan-400">
+          <BrainCircuit size={64} strokeWidth={1} />
+        </div>
+        <h1 className="text-6xl font-light mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 to-purple-200">
+          NOOSPHERE
+        </h1>
+        <p className="text-xl text-stone-400 font-light mb-12 tracking-wide">
+          An ecosystem of living ideas. <br />
+          Plant. Observe. Connect.
+        </p>
 
-           <div className="flex flex-col gap-3">
-             <MenuButton primary onClick={() => onPlay('campaign')} label={started ? 'Continue' : 'Begin'} detail={campaignDetail} />
-             <MenuButton
-               onClick={() => onPlay('free')}
-               label="Free Mind"
-               detail={hasSavedMind('free') ? 'Return to your sandbox.' : 'No focus, no doubts. Just play.'}
-             />
-           </div>
+        <div className="flex flex-col gap-3">
+          <MenuButton
+            primary
+            onClick={() => onPlay('campaign')}
+            label={started ? 'Continue' : 'Begin'}
+            detail={campaignDetail}
+          />
+          <MenuButton
+            onClick={() => onPlay('free')}
+            label="Free Mind"
+            detail={
+              hasSavedMind('free') ? 'Return to your sandbox.' : 'No focus, no doubts. Just play.'
+            }
+          />
+        </div>
 
-           {started && (
-             <button
-               onClick={() => {
-                 if (!confirmReset) return setConfirmReset(true);
-                 setConfirmReset(false);
-                 onResetCampaign();
-               }}
-               onBlur={() => setConfirmReset(false)}
-               className={`mt-8 text-[11px] uppercase tracking-widest transition-colors ${confirmReset ? 'text-rose-300' : 'text-stone-600 hover:text-stone-400'}`}
-             >
-               {confirmReset ? 'Click again to erase campaign progress' : 'Restart campaign'}
-             </button>
-           )}
-       </div>
+        {started && (
+          <button
+            onClick={() => {
+              if (!confirmReset) return setConfirmReset(true);
+              setConfirmReset(false);
+              onResetCampaign();
+            }}
+            onBlur={() => setConfirmReset(false)}
+            className={`mt-8 text-[11px] uppercase tracking-widest transition-colors ${confirmReset ? 'text-rose-300' : 'text-stone-600 hover:text-stone-400'}`}
+          >
+            {confirmReset ? 'Click again to erase campaign progress' : 'Restart campaign'}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

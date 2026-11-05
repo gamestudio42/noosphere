@@ -1,9 +1,8 @@
-
 import { IdeaNode } from '../types';
 
 // Size of the largest connected group of ideas
 export const largestNetwork = (nodes: IdeaNode[]): number => {
-  const byId = new Map(nodes.map(n => [n.id, n]));
+  const byId = new Map(nodes.map((n) => [n.id, n]));
   const seen = new Set<string>();
   let best = 0;
   for (const start of nodes) {

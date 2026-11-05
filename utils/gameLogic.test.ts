@@ -16,7 +16,7 @@ const W = 800;
 const H = 600;
 
 const step = (nodes: IdeaNode[], dt = 1, events: SimEvent[] = []) =>
-  updatePhysics(nodes, [], W, H, dt, null, e => events.push(e)).nodes;
+  updatePhysics(nodes, [], W, H, dt, null, (e) => events.push(e)).nodes;
 
 beforeEach(() => setRandom(seededRandom(42)));
 
@@ -27,7 +27,9 @@ describe('blends', () => {
 
   it('averages traits', () => {
     const t = blendTraits(['RATIONAL', 'CREATIVE']);
-    expect(t.decay).toBeCloseTo((ARCHETYPES.RATIONAL.traits.decay + ARCHETYPES.CREATIVE.traits.decay) / 2);
+    expect(t.decay).toBeCloseTo(
+      (ARCHETYPES.RATIONAL.traits.decay + ARCHETYPES.CREATIVE.traits.decay) / 2,
+    );
   });
 
   it('blends hues around the colour wheel', () => {
@@ -72,7 +74,7 @@ describe('updatePhysics', () => {
     b.connections.push(a.id);
     b.energy = 0.01;
     const next = step([a, b]);
-    expect(next.map(n => n.id)).toEqual([a.id]);
+    expect(next.map((n) => n.id)).toEqual([a.id]);
     expect(a.connections).toEqual([]);
   });
 
@@ -85,7 +87,7 @@ describe('updatePhysics', () => {
     const child = next[1];
     expect(child.parent).toBe(node.id);
     expect(node.connections).toContain(child.id);
-    expect(events.some(e => e.kind === 'split')).toBe(true);
+    expect(events.some((e) => e.kind === 'split')).toBe(true);
   });
 
   it('never exceeds the population cap', () => {
@@ -116,12 +118,12 @@ describe('updatePhysics', () => {
   it('eventually births a hybrid from compatible archetypes', () => {
     let nodes = [createNode(380, 300, 'RATIONAL'), createNode(420, 300, 'CREATIVE')];
     const events: SimEvent[] = [];
-    for (let f = 0; f < 60 * 60 && !events.some(e => e.kind === 'hybrid'); f++) {
+    for (let f = 0; f < 60 * 60 && !events.some((e) => e.kind === 'hybrid'); f++) {
       // Keep them alive the way a player's attention would
       for (const n of nodes) n.energy = Math.max(n.energy, 60);
       nodes = step(nodes, 1, events);
     }
-    const hybrid = events.find(e => e.kind === 'hybrid');
+    const hybrid = events.find((e) => e.kind === 'hybrid');
     expect(hybrid).toBeDefined();
     if (hybrid?.kind === 'hybrid') expect(hybrid.node.blend).toEqual(['RATIONAL', 'CREATIVE']);
   });
@@ -132,7 +134,7 @@ describe('updatePhysics', () => {
       let nodes = [createNode(300, 300, 'EMOTIONAL'), createNode(340, 320, 'PRIMAL')];
       for (const n of nodes) n.energy = 80;
       for (let f = 0; f < 600; f++) nodes = step(nodes);
-      return nodes.map(n => [n.blend.join('+'), Math.round(n.pos.x), Math.round(n.energy)]);
+      return nodes.map((n) => [n.blend.join('+'), Math.round(n.pos.x), Math.round(n.energy)]);
     };
     expect(run()).toEqual(run());
   });

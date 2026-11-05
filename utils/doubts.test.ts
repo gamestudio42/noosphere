@@ -34,8 +34,9 @@ describe('doubts', () => {
     node.energy = 80;
     let doubts = [doubtAtPos(300, 300)];
     const events: DoubtEvent[] = [];
-    for (let i = 0; i < 600; i++) doubts = updateDoubts(doubts, [node], W, H, 1, e => events.push(e));
-    expect(events.some(e => e.kind === 'latch' && e.node === node)).toBe(true);
+    for (let i = 0; i < 600; i++)
+      doubts = updateDoubts(doubts, [node], W, H, 1, (e) => events.push(e));
+    expect(events.some((e) => e.kind === 'latch' && e.node === node)).toBe(true);
     expect(node.energy).toBeLessThan(80);
     expect(doubts[0].strength).toBeGreaterThan(DOUBT.STRENGTH);
   });
@@ -51,12 +52,17 @@ describe('doubts', () => {
   });
 
   it('are dissolved by nearby Logic ideas', () => {
-    const logic = [createNode(400, 300, 'RATIONAL'), createNode(410, 300, 'RATIONAL'), createNode(400, 310, 'RATIONAL')];
+    const logic = [
+      createNode(400, 300, 'RATIONAL'),
+      createNode(410, 300, 'RATIONAL'),
+      createNode(400, 310, 'RATIONAL'),
+    ];
     let doubts = [doubtAtPos(460, 300)];
     const events: DoubtEvent[] = [];
-    for (let i = 0; i < 600 && doubts.length; i++) doubts = updateDoubts(doubts, logic, W, H, 1, e => events.push(e));
+    for (let i = 0; i < 600 && doubts.length; i++)
+      doubts = updateDoubts(doubts, logic, W, H, 1, (e) => events.push(e));
     expect(doubts).toHaveLength(0);
-    expect(events.some(e => e.kind === 'dissolved')).toBe(true);
+    expect(events.some((e) => e.kind === 'dissolved')).toBe(true);
   });
 
   it('can be found under the cursor', () => {

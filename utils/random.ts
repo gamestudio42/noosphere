@@ -1,4 +1,3 @@
-
 // Swappable random source so the simulation can be made deterministic in tests
 let source: () => number = Math.random;
 

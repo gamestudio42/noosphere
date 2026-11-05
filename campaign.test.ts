@@ -34,7 +34,7 @@ const stats = (overrides: Partial<SessionStats> = {}): SessionStats => ({
 
 const atChapter = (id: string): CampaignState => ({
   ...newCampaign(),
-  chapter: CHAPTERS.findIndex(c => c.id === id),
+  chapter: CHAPTERS.findIndex((c) => c.id === id),
 });
 
 describe('campaign', () => {
@@ -52,7 +52,7 @@ describe('campaign', () => {
 
   it('completes objectives one by one and then the chapter', () => {
     let update = advanceCampaign(newCampaign(), stats({ planted: 3 }));
-    expect(update.completed.map(o => o.id)).toEqual(['plant']);
+    expect(update.completed.map((o) => o.id)).toEqual(['plant']);
     expect(update.chapterCompleted).toBeNull();
 
     update = advanceCampaign(update.state, stats({ planted: 3, splits: 1, bonds: 2 }));
@@ -65,7 +65,9 @@ describe('campaign', () => {
     // Hybrids born before the chapter began don't count
     const state = { ...atChapter('chaos'), baseline: { hybridsBorn: 4 } };
     expect(advanceCampaign(state, stats({ hybridsBorn: 4 })).completed).toEqual([]);
-    expect(advanceCampaign(state, stats({ hybridsBorn: 5 })).completed.map(o => o.id)).toEqual(['hybrid']);
+    expect(advanceCampaign(state, stats({ hybridsBorn: 5 })).completed.map((o) => o.id)).toEqual([
+      'hybrid',
+    ]);
   });
 
   it('requires hold objectives to stay met for their whole duration', () => {
@@ -78,17 +80,30 @@ describe('campaign', () => {
     expect(state.holdSince.hold).toBeUndefined();
 
     state = advanceCampaign(state, stats({ alive: 25, duration: 50_000 })).state;
-    expect(advanceCampaign(state, stats({ alive: 25, duration: 109_000 })).chapterCompleted).toBeNull();
-    expect(advanceCampaign(state, stats({ alive: 25, duration: 110_000 })).chapterCompleted?.id).toBe('doubt');
+    expect(
+      advanceCampaign(state, stats({ alive: 25, duration: 109_000 })).chapterCompleted,
+    ).toBeNull();
+    expect(
+      advanceCampaign(state, stats({ alive: 25, duration: 110_000 })).chapterCompleted?.id,
+    ).toBe('doubt');
   });
 
   it('keeps finished objectives when a chapter is retried', () => {
-    const state: CampaignState = { ...atChapter('doubt'), baseline: { doubtsBanished: 9 }, done: ['banish'], holdSince: { hold: 5 } };
+    const state: CampaignState = {
+      ...atChapter('doubt'),
+      baseline: { doubtsBanished: 9 },
+      done: ['banish'],
+      holdSince: { hold: 5 },
+    };
     expect(restartChapter(state)).toEqual({ ...state, baseline: {}, holdSince: {} });
   });
 
   it('ends after the last chapter', () => {
-    let state: CampaignState = { ...atChapter('instinct'), done: ['whole'], holdSince: { endure: 0 } };
+    let state: CampaignState = {
+      ...atChapter('instinct'),
+      done: ['whole'],
+      holdSince: { endure: 0 },
+    };
     state = advanceCampaign(state, stats({ alive: 40, duration: 90_000 })).state;
     expect(isComplete(state)).toBe(true);
     expect(unlockedArchetypes(state)).toHaveLength(4);

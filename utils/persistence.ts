@@ -1,4 +1,3 @@
-
 import { Doubt, GameMode, IdeaNode } from '../types';
 import { blendTraits, normalizeBlend } from './gameLogic';
 import { CampaignState } from '../campaign';
@@ -52,14 +51,18 @@ export const clearMind = (mode: GameMode) => {
 
 export const loadMind = (mode: GameMode): SavedMind | null => {
   try {
-    const raw = localStorage.getItem(keyFor(mode)) ?? (mode === 'free' ? localStorage.getItem(LEGACY_KEY) : null);
+    const raw =
+      localStorage.getItem(keyFor(mode)) ??
+      (mode === 'free' ? localStorage.getItem(LEGACY_KEY) : null);
     if (!raw) return null;
     const mind = JSON.parse(raw) as SavedMind;
     if (!Array.isArray(mind.nodes)) return null;
     // Drop anything corrupted by an older bug (NaN positions save as null)
-    mind.nodes = mind.nodes.filter(n => Number.isFinite(n.pos?.x) && Number.isFinite(n.pos?.y));
+    mind.nodes = mind.nodes.filter((n) => Number.isFinite(n.pos?.x) && Number.isFinite(n.pos?.y));
     if (mind.nodes.length === 0) return null;
-    mind.doubts = mind.doubts?.filter(d => Number.isFinite(d.pos?.x) && Number.isFinite(d.pos?.y));
+    mind.doubts = mind.doubts?.filter(
+      (d) => Number.isFinite(d.pos?.x) && Number.isFinite(d.pos?.y),
+    );
     // Traits are derived data; recompute in case archetype tuning changed
     for (const n of mind.nodes) {
       n.blend = normalizeBlend(n.blend);
@@ -90,7 +93,12 @@ export const loadCampaign = (): CampaignState | null => {
     const state = JSON.parse(raw) as CampaignState;
     if (typeof state.chapter !== 'number') return null;
     // Hold timers are measured in mind age, which doesn't survive a reload exactly
-    return { chapter: state.chapter, baseline: state.baseline ?? {}, done: state.done ?? [], holdSince: {} };
+    return {
+      chapter: state.chapter,
+      baseline: state.baseline ?? {},
+      done: state.done ?? [],
+      holdSince: {},
+    };
   } catch {
     return null;
   }

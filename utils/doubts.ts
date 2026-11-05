@@ -3,8 +3,7 @@ import { DOUBT } from '../constants';
 import { random } from './random';
 
 export type DoubtEvent =
-  | { kind: 'latch'; doubt: Doubt; node: IdeaNode }
-  | { kind: 'dissolved'; doubt: Doubt };
+  { kind: 'latch'; doubt: Doubt; node: IdeaNode } | { kind: 'dissolved'; doubt: Doubt };
 
 let idCounter = 0;
 
@@ -15,10 +14,13 @@ export const spawnDoubt = (width: number, height: number): Doubt => {
   const side = Math.floor(random() * 4);
   const t = random();
   const pos =
-    side === 0 ? { x: t * width, y: -20 } :
-    side === 1 ? { x: width + 20, y: t * height } :
-    side === 2 ? { x: t * width, y: height + 20 } :
-    { x: -20, y: t * height };
+    side === 0
+      ? { x: t * width, y: -20 }
+      : side === 1
+        ? { x: width + 20, y: t * height }
+        : side === 2
+          ? { x: t * width, y: height + 20 }
+          : { x: -20, y: t * height };
   return {
     id: `doubt-${idCounter++}`,
     pos,
@@ -38,7 +40,7 @@ export const maxDoubts = (alive: number) =>
 
 // The doubt under a point, if any (slightly generous to be easy to click)
 export const doubtAt = (doubts: Doubt[], x: number, y: number) =>
-  doubts.find(d => Math.hypot(d.pos.x - x, d.pos.y - y) < doubtRadius(d) + 12) ?? null;
+  doubts.find((d) => Math.hypot(d.pos.x - x, d.pos.y - y) < doubtRadius(d) + 12) ?? null;
 
 // Moves doubts, drains the ideas they latch onto and removes dissolved ones.
 // Drained energy is applied to the nodes in place; physics cleans up the dead.
@@ -48,7 +50,7 @@ export const updateDoubts = (
   width: number,
   height: number,
   dt: number,
-  onEvent: (event: DoubtEvent) => void
+  onEvent: (event: DoubtEvent) => void,
 ): Doubt[] => {
   for (const doubt of doubts) {
     let nearest: IdeaNode | null = null;
@@ -99,7 +101,7 @@ export const updateDoubts = (
     doubt.strength = Math.min(doubt.strength, DOUBT.MAX_STRENGTH);
   }
 
-  return doubts.filter(doubt => {
+  return doubts.filter((doubt) => {
     if (doubt.strength > 0) return true;
     onEvent({ kind: 'dissolved', doubt });
     return false;

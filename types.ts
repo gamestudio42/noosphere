@@ -1,4 +1,3 @@
-
 export type Archetype = 'RATIONAL' | 'EMOTIONAL' | 'CREATIVE' | 'PRIMAL';
 
 export interface Vector2 {
@@ -8,11 +7,11 @@ export interface Vector2 {
 
 // Behavioural multipliers; 1 = neutral
 export interface Traits {
-  decay: number;        // energy loss speed
-  growth: number;       // energy needed to split (multiplies GROWTH_THRESHOLD)
-  sociability: number;  // synthesis chance and reach
-  gravity: number;      // pull exerted on nearby nodes
-  inertia: number;      // lower max speed when > 1
+  decay: number; // energy loss speed
+  growth: number; // energy needed to split (multiplies GROWTH_THRESHOLD)
+  sociability: number; // synthesis chance and reach
+  gravity: number; // pull exerted on nearby nodes
+  inertia: number; // lower max speed when > 1
 }
 
 export interface IdeaNode {
@@ -79,7 +78,7 @@ export type GameMode = 'campaign' | 'free';
 
 // What the current mode or chapter switches on
 export interface GameRules {
-  focus: boolean;  // actions cost focus
+  focus: boolean; // actions cost focus
   doubts: boolean; // doubts drift in and drain ideas
 }
 
