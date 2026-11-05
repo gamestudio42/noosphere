@@ -87,6 +87,9 @@ Still open in the [roadmap](ROADMAP.md): a WebGL renderer with real bloom, a sha
 that also fixes colour blindness, keyboard play, hero moments for hybrid births, music locked to a
 scale, PWA offline support and translations.
 
+What is implemented, how it was verified and what is knowingly missing is in the
+[project status](docs/STATUS.md); open work is in [TASKS.md](TASKS.md).
+
 ## Play
 
 Open **[gamestudio42.github.io/noosphere](https://gamestudio42.github.io/noosphere/)**. Choose
@@ -126,7 +129,9 @@ npm run dev        # http://localhost:3000
 The simulation lives in `utils/gameLogic.ts` and is pure apart from the swappable RNG in
 `utils/random.ts`. `utils/renderer.ts` draws the canvas and exports the PNG, `utils/audio.ts` plays
 the tones and the ambient drone, and `components/Board.tsx` owns the animation loop and input. See
-the [roadmap](ROADMAP.md), the [rules for agents](AGENTS.md) and `.gs42/standards/` for the
+the [roadmap](ROADMAP.md), the [project status](docs/STATUS.md), the [tasks](TASKS.md), the
+[asset register](ASSETS.md), the [architecture](docs/architecture/overview.md), the
+[decisions](docs/decisions/), the [rules for agents](AGENTS.md) and `.gs42/standards/` for the
 engineering standards of this workspace.
 
 Every push to `main` runs type check, lint, tests and build, then publishes `dist/` to the
