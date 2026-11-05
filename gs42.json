@@ -1,0 +1,14 @@
+{
+  "title": "Noosphere",
+  "tagline": {
+    "en": "An ecosystem of living ideas.",
+    "pt": "Um ecossistema de ideias vivas.",
+    "es": "Un ecosistema de ideas vivas.",
+    "fr": "Un écosystème d'idées vivantes.",
+    "de": "Ein Ökosystem lebendiger Ideen."
+  },
+  "cover": "docs/screenshots/cover.jpg",
+  "genre": "creative-sandbox",
+  "tech": ["TypeScript", "React", "Canvas 2D", "WebAudio"],
+  "order": 6
+}
