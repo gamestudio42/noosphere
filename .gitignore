@@ -17,6 +17,9 @@ test-results
 playwright-report
 blob-report
 
+# Hermes working notes (plans, local scratch)
+.hermes/plans
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
