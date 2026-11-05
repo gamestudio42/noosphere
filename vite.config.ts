@@ -19,5 +19,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // e2e is Playwright's: Vitest would try to run those specs and fail on their imports.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
 });
