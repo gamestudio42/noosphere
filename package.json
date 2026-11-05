@@ -2,6 +2,16 @@
   "name": "noosphere",
   "private": true,
   "version": "0.0.0",
+  "description": "An ecosystem of living ideas: a browser game where thoughts bond, split and fade.",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gamestudio42/noosphere.git"
+  },
+  "homepage": "https://gamestudio42.github.io/noosphere/",
+  "bugs": {
+    "url": "https://github.com/gamestudio42/noosphere/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
