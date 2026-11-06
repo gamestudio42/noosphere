@@ -1,6 +1,7 @@
 import { Doubt, IdeaNode, Particle, Vector2 } from '../types';
 import { ATTENTION_RADIUS } from './gameLogic';
 import { doubtRadius } from './doubts';
+import { Ripple } from './feel';
 
 export const BACKGROUND = '#050505';
 
@@ -13,6 +14,7 @@ interface FrameOptions {
   time: number; // ms, drives the synapse undulation
   attention: Vector2 | null;
   reducedMotion: boolean;
+  ripples?: Ripple[];
 }
 
 // Stable per-idea phase so synapses undulate instead of flickering
@@ -47,7 +49,7 @@ export const drawFrame = (
   nodes: IdeaNode[],
   particles: Particle[],
   doubts: Doubt[],
-  { width, height, time, attention, reducedMotion }: FrameOptions,
+  { width, height, time, attention, reducedMotion, ripples = [] }: FrameOptions,
 ) => {
   // The canvas is transparent over a CSS background. Fading alpha with
   // destination-out leaves trails that fully vanish, unlike painting a
@@ -182,6 +184,18 @@ export const drawFrame = (
     ctx.fill();
   });
   ctx.globalAlpha = 1.0;
+
+  // Ripples: expanding rings from clicks and births, easing out as they fade
+  for (const r of ripples) {
+    const k = Math.min(1, Math.max(0, (time - r.born) / r.duration));
+    const ease = 1 - (1 - k) * (1 - k) * (1 - k);
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, r.from + (r.to - r.from) * ease, 0, Math.PI * 2);
+    ctx.strokeStyle = `hsla(${r.hue}, 100%, 75%, ${(1 - k) * 0.8})`;
+    ctx.lineWidth = r.width * (1 - k * 0.6);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 1;
 
   // Doubts are drawn normally (not additively) so they darken what they cover
   ctx.globalCompositeOperation = 'source-over';

@@ -7,7 +7,7 @@ cohesive, and a game that holds attention, not just a toy.
 
 | Area          | Score | Notes                                                                                                          |
 | ------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
-| Engineering   | 7/10  | Tests, CI, frame-rate independent physics, saves. Missing a fixed timestep and spatial hashing.                |
+| Engineering   | 7/10  | Tests, CI, frame-rate independent physics, saves. Missing a fixed timestep.                                    |
 | Game design   | 3/10  | A toy, not a game: planting is free and unlimited, no goals, threats or progression beyond 8 one-off insights. |
 | Onboarding    | 2/10  | The intro drops you into an empty screen. Hybrids and affinities are never taught.                             |
 | Visuals       | 5/10  | Pretty but generic Canvas 2D glow circles. No real bloom, depth, living background or hero moments.            |
@@ -29,9 +29,9 @@ cohesive, and a game that holds attention, not just a toy.
 ## Phase 2: visuals and game feel
 
 - [ ] WebGL renderer (PixiJS or custom shaders) with bloom, layered neural background and thousands of particles.
-- [ ] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
+- [x] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
 - [ ] A shape per archetype as well as a colour (also fixes colour blindness).
-- [ ] Screen shake and stronger click feedback.
+- [x] Screen shake and stronger click feedback.
 
 ## Phase 3: audio
 
@@ -43,4 +43,5 @@ cohesive, and a game that holds attention, not just a toy.
 - [ ] Pause menu and settings (volume, quality, accessibility), keyboard shortcuts, fullscreen.
 - [ ] Installable offline PWA, real touch testing, Portuguese and English.
 - [ ] More insights, cross-session stats, e2e tests.
-- [ ] Fixed simulation timestep and spatial hashing for larger minds.
+- [ ] Fixed simulation timestep.
+- [x] Spatial hashing for pair forces.

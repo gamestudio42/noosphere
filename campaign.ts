@@ -139,11 +139,11 @@ export const CHAPTERS: Chapter[] = [
       },
       {
         id: 'endure',
-        label: 'Keep 40 ideas alive for 90s',
+        label: 'Keep 35 ideas alive for 60s',
         hint: 'The whole mind, defended. This is the last trial.',
         stat: 'alive',
-        target: 40,
-        holdSeconds: 90,
+        target: 35,
+        holdSeconds: 60,
       },
     ],
   },
@@ -154,7 +154,12 @@ export interface CampaignState {
   baseline: Partial<Record<keyof SessionStats, number>>; // stats when the chapter began
   done: string[]; // objective ids completed in this chapter
   holdSince: Record<string, number>; // mind age (ms) when a hold objective was first met
+  holdMissedAt?: Record<string, number>; // mind age (ms) when a running hold first dipped
 }
+
+// A hold survives a brief dip below target: an idea dying and its neighbour
+// splitting a moment later shouldn't throw away a minute of play
+export const HOLD_GRACE_MS = 5000;
 
 export const newCampaign = (): CampaignState => ({
   chapter: 0,
@@ -199,6 +204,7 @@ export const restartChapter = (state: CampaignState): CampaignState => ({
   ...state,
   baseline: {},
   holdSince: {},
+  holdMissedAt: {},
 });
 
 export interface CampaignUpdate {
@@ -214,6 +220,7 @@ export const advanceCampaign = (state: CampaignState, stats: SessionStats): Camp
 
   const done = [...state.done];
   const holdSince = { ...state.holdSince };
+  const holdMissedAt = { ...state.holdMissedAt };
   const completed: Objective[] = [];
   let changed = false;
 
@@ -223,14 +230,24 @@ export const advanceCampaign = (state: CampaignState, stats: SessionStats): Camp
     const met = value >= objective.target;
 
     if (objective.holdSeconds) {
+      const running = objective.id in holdSince;
       if (!met) {
-        if (objective.id in holdSince) {
+        if (!running) continue;
+        if (!(objective.id in holdMissedAt)) {
+          holdMissedAt[objective.id] = stats.duration;
+          changed = true;
+        } else if (stats.duration - holdMissedAt[objective.id] > HOLD_GRACE_MS) {
           delete holdSince[objective.id];
+          delete holdMissedAt[objective.id];
           changed = true;
         }
         continue;
       }
-      if (!(objective.id in holdSince)) {
+      if (objective.id in holdMissedAt) {
+        delete holdMissedAt[objective.id];
+        changed = true;
+      }
+      if (!running) {
         holdSince[objective.id] = stats.duration;
         changed = true;
       }
@@ -250,11 +267,15 @@ export const advanceCampaign = (state: CampaignState, stats: SessionStats): Camp
     // Snapshot every stat so the next chapter's counters start from zero
     const baseline = Object.fromEntries(Object.entries(stats)) as CampaignState['baseline'];
     return {
-      state: { chapter: state.chapter + 1, baseline, done: [], holdSince: {} },
+      state: { chapter: state.chapter + 1, baseline, done: [], holdSince: {}, holdMissedAt: {} },
       completed,
       chapterCompleted: chapter,
     };
   }
 
-  return { state: { ...state, done, holdSince }, completed, chapterCompleted: null };
+  return {
+    state: { ...state, done, holdSince, holdMissedAt },
+    completed,
+    chapterCompleted: null,
+  };
 };

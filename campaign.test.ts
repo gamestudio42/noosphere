@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HOLD_GRACE_MS,
   CHAPTERS,
   advanceCampaign,
   isComplete,
@@ -75,8 +76,18 @@ describe('campaign', () => {
     state = advanceCampaign(state, stats({ alive: 20, duration: 10_000 })).state;
     expect(state.holdSince.hold).toBe(10_000);
 
-    // Dropping below target resets the timer
+    // A brief dip keeps the timer running...
     state = advanceCampaign(state, stats({ alive: 19, duration: 40_000 })).state;
+    expect(state.holdSince.hold).toBe(10_000);
+    state = advanceCampaign(state, stats({ alive: 20, duration: 44_000 })).state;
+    expect(state.holdSince.hold).toBe(10_000);
+
+    // ...but staying below target past the grace period resets it
+    state = advanceCampaign(state, stats({ alive: 19, duration: 45_000 })).state;
+    state = advanceCampaign(
+      state,
+      stats({ alive: 19, duration: 45_000 + HOLD_GRACE_MS + 1 }),
+    ).state;
     expect(state.holdSince.hold).toBeUndefined();
 
     state = advanceCampaign(state, stats({ alive: 25, duration: 50_000 })).state;
@@ -95,7 +106,12 @@ describe('campaign', () => {
       done: ['banish'],
       holdSince: { hold: 5 },
     };
-    expect(restartChapter(state)).toEqual({ ...state, baseline: {}, holdSince: {} });
+    expect(restartChapter(state)).toEqual({
+      ...state,
+      baseline: {},
+      holdSince: {},
+      holdMissedAt: {},
+    });
   });
 
   it('ends after the last chapter', () => {
@@ -104,7 +120,7 @@ describe('campaign', () => {
       done: ['whole'],
       holdSince: { endure: 0 },
     };
-    state = advanceCampaign(state, stats({ alive: 40, duration: 90_000 })).state;
+    state = advanceCampaign(state, stats({ alive: 35, duration: 60_000 })).state;
     expect(isComplete(state)).toBe(true);
     expect(unlockedArchetypes(state)).toHaveLength(4);
     expect(advanceCampaign(state, stats()).state).toBe(state);

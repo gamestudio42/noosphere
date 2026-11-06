@@ -83,8 +83,9 @@ finished objectives. Free Mind is the original sandbox: every archetype, no focu
 doubts. Nine insights track milestones in a session; the mind is saved and exported as a PNG
 portrait.
 
-Still open in the [roadmap](ROADMAP.md): a WebGL renderer with real bloom, a shape per archetype
-that also fixes colour blindness, keyboard play, hero moments for hybrid births, music locked to a
+Clicks answer with ripples and a little shake, and a hybrid carrying more archetypes than any
+before it slows time for a beat. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with real
+bloom, a shape per archetype that also fixes colour blindness, keyboard play, music locked to a
 scale, PWA offline support and translations.
 
 What is implemented, how it was verified and what is knowingly missing is in the
@@ -109,7 +110,7 @@ in English; contextual hints explain each mechanic the first time it matters.
 | Save a portrait   | the image button (PNG of the current mind)      |
 
 There are no keyboard shortcuts yet — that is on the roadmap. The view respects
-`prefers-reduced-motion`: no trails, sway or particles when it is set.
+`prefers-reduced-motion`: no trails, sway, particles, ripples, shake or slow motion when it is set.
 
 ## Develop
 
@@ -122,7 +123,7 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (34 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (40 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 

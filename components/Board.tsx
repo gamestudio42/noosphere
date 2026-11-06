@@ -18,6 +18,16 @@ import { drawFrame, BACKGROUND } from '../utils/renderer';
 import { largestNetwork } from '../utils/stats';
 import { INSIGHTS } from '../insights';
 import { saveMind, loadMind, clearMind } from '../utils/persistence';
+import {
+  addRipple,
+  addTrauma,
+  decayFeel,
+  newFeel,
+  shakeOffset,
+  startHero,
+  timeScale,
+  zoom,
+} from '../utils/feel';
 
 interface BoardProps {
   mode: GameMode; // which saved mind to resume and write
@@ -75,6 +85,10 @@ export const Board: React.FC<BoardProps> = ({
   const nextDoubtRef = useRef<number>(DOUBT.FIRST_DELAY_MS);
   const callbacksRef = useRef({ onStats, onInsight, onExtinct, onDenied });
   callbacksRef.current = { onStats, onInsight, onExtinct, onDenied };
+  // Ripples, shake and hero moments; heroBlend is the widest blend celebrated so far
+  const feelRef = useRef(newFeel());
+  const heroBlendRef = useRef(1);
+  const transformRef = useRef('');
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
 
@@ -119,6 +133,7 @@ export const Board: React.FC<BoardProps> = ({
         startedAt: Date.now() - saved.session.duration,
         unlocked: new Set(saved.session.unlocked),
       });
+      heroBlendRef.current = Math.max(1, ...saved.nodes.map((n) => n.blend.length));
       onRestoreRef.current(INSIGHTS.filter((i) => session.unlocked.has(i.id)));
       return;
     }
@@ -188,6 +203,32 @@ export const Board: React.FC<BoardProps> = ({
     }
   };
 
+  // A ring that grows out of a point; skipped when motion is reduced
+  const ripple = (
+    x: number,
+    y: number,
+    hue: number,
+    from: number,
+    to: number,
+    ms = 450,
+    width = 1.5,
+  ) => {
+    if (reducedMotionRef.current) return;
+    addRipple(feelRef.current, {
+      x,
+      y,
+      hue,
+      from,
+      to,
+      width,
+      duration: ms,
+      born: performance.now(),
+    });
+  };
+  const shake = (amount: number) => {
+    if (!reducedMotionRef.current) addTrauma(feelRef.current, amount);
+  };
+
   const reportStats = () => {
     const session = sessionRef.current;
     const now = Date.now();
@@ -251,11 +292,15 @@ export const Board: React.FC<BoardProps> = ({
 
     // Work in CSS pixels; the canvas backing store is scaled by devicePixelRatio
     const { width, height } = sizeRef.current;
-    const dt =
+    const realDt =
       lastFrameRef.current === null
         ? 1
         : Math.min((time - lastFrameRef.current) / FRAME_MS, MAX_DT);
     lastFrameRef.current = time;
+    // A hero moment slows the whole mind down for a beat
+    const feel = feelRef.current;
+    const dt = realDt * timeScale(feel, time);
+    decayFeel(feel, time, realDt * FRAME_MS);
     const { focus: usesFocus, doubts: usesDoubts } = rulesRef.current;
 
     if (usesDoubts) {
@@ -275,7 +320,10 @@ export const Board: React.FC<BoardProps> = ({
         height,
         dt,
         (event) => {
-          if (event.kind !== 'dissolved') return;
+          if (event.kind === 'latch') {
+            shake(0.12);
+            return;
+          }
           // Logic saw through it
           sessionRef.current.doubtsDissolved++;
           spawnParticles(event.doubt.pos.x, event.doubt.pos.y, 'hsl(190, 100%, 80%)', 12);
@@ -301,6 +349,17 @@ export const Board: React.FC<BoardProps> = ({
         if (event.kind === 'split') sessionRef.current.splits++;
         if (event.kind === 'hybrid') {
           sessionRef.current.hybridsBorn++;
+          // Every birth sends out a shockwave; a blend wider than any before
+          // (the first hybrid, the first trio, the whole mind) stops time
+          ripple(event.x, event.y, event.node.hue, 8, 120, 750, 2.5);
+          if (event.node.blend.length > heroBlendRef.current && !reducedMotionRef.current) {
+            heroBlendRef.current = event.node.blend.length;
+            startHero(feelRef.current, event.x, event.y, performance.now());
+            ripple(event.x, event.y, event.node.hue, 20, 320, 1100, 3);
+            shake(0.45);
+          } else {
+            shake(0.18);
+          }
           // A new kind of idea: always celebrate it
           spawnParticles(event.x, event.y, `hsl(${event.node.hue}, 100%, 70%)`, 24);
           playBlend(event.node.blend, 0.9);
@@ -336,7 +395,23 @@ export const Board: React.FC<BoardProps> = ({
       time,
       attention: mouseRef.current,
       reducedMotion: reducedMotionRef.current,
+      ripples: feel.ripples,
     });
+
+    // Shake and zoom move the canvas element itself: cheap, and the trails
+    // already painted move with it instead of smearing
+    const offset = shakeOffset(feel, time);
+    const scale = 1 + zoom(feel, time);
+    const origin = feel.heroPos ? `${feel.heroPos.x}px ${feel.heroPos.y}px` : 'center';
+    const transform =
+      offset.x === 0 && offset.y === 0 && scale === 1
+        ? ''
+        : `translate(${offset.x.toFixed(2)}px, ${offset.y.toFixed(2)}px) scale(${scale.toFixed(4)})`;
+    if (transform !== transformRef.current) {
+      transformRef.current = transform;
+      canvas.style.transform = transform;
+      canvas.style.transformOrigin = origin;
+    }
     requestRef.current = requestAnimationFrame(animate);
   };
 
@@ -403,6 +478,8 @@ export const Board: React.FC<BoardProps> = ({
     const spend = (cost: number) => {
       if (!usesFocus) return true;
       if (!canAfford(focusRef.current, cost)) {
+        ripple(cx, cy, 0, 4, 22, 300, 2);
+        shake(0.2);
         playCue('denied');
         callbacksRef.current.onDenied();
         return false;
@@ -417,6 +494,8 @@ export const Board: React.FC<BoardProps> = ({
       if (spend(FOCUS.BANISH)) {
         doubtsRef.current = doubtsRef.current.filter((d) => d !== doubt);
         sessionRef.current.doubtsBanished++;
+        ripple(doubt.pos.x, doubt.pos.y, 275, 10, 90, 600, 2.5);
+        shake(0.3);
         spawnParticles(doubt.pos.x, doubt.pos.y, 'hsl(275, 80%, 85%)', 20);
         playCue('banish');
       }
@@ -439,6 +518,8 @@ export const Board: React.FC<BoardProps> = ({
       if (spend(FOCUS.STIMULATE)) {
         // Stimulate: a boost, not an instant split
         node.energy = Math.min(100, node.energy + 35);
+        ripple(node.pos.x, node.pos.y, node.hue, node.radius, node.radius * 4, 400);
+        shake(0.06);
         node.vel.x += (Math.random() - 0.5) * 5;
         node.vel.y += (Math.random() - 0.5) * 5;
         spawnParticles(node.pos.x, node.pos.y, `hsl(${node.hue}, 100%, 50%)`, 10);
@@ -450,6 +531,7 @@ export const Board: React.FC<BoardProps> = ({
       newNode.energy = 70;
       nodesRef.current.push(newNode);
       sessionRef.current.planted++;
+      ripple(cx, cy, newNode.hue, 2, 40, 500);
       spawnParticles(cx, cy, '#fff', 15);
       playTone(archetype, 0.8);
     }
