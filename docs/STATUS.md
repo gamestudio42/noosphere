@@ -36,16 +36,22 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   in one path per colour; the canvas pixel ratio is capped at 2.
 - **Persistence** (`utils/persistence.ts`): each mode keeps its own save (`noosphere:mind:v2:<mode>`),
   campaign progress has its own key, and an older v1 save loads as the sandbox.
+- **Pause and settings** (`components/PauseMenu.tsx`, `utils/settings.ts`): Esc or P pauses the
+  mind, its doubts, focus and sound, and mind age skips the pause; hiding the tab pauses too. The
+  menu sets volume, sound, screen shake, full or reduced effects and fullscreen, saved in
+  `noosphere:settings:v1`. Keys 1–4 pick an archetype, M mutes, F toggles fullscreen.
 - **Insights** (`insights.ts`): nine milestones, shown as toasts during a session alongside objective
   toasts.
 
 ## How it is verified
 
-- `npm run check` — TypeScript, ESLint and 46 Vitest tests across seven files (game logic, stats,
-  focus, doubts, campaign, feel, music). Green locally and in CI.
+- `npm run check` — TypeScript, ESLint and 48 Vitest tests across eight files (game logic, stats,
+  focus, doubts, campaign, feel, music, settings). Green locally and in CI.
 - `npm run build` — static build in `dist/`, green locally and in CI.
-- `npm run e2e` — one Playwright smoke test: the menu renders, Free Mind starts, planting three ideas
-  raises IDEAS to at least 3 and the page logs no errors.
+- `npm run e2e` — two Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
+  ideas raises IDEAS to at least 3 and the page logs no errors. Pause: number keys pick an
+  archetype, Esc opens the pause menu with Resume focused, mind age stands still while paused, a
+  setting is saved, and Esc resumes.
 - `npm run format:check` — Prettier with the studio settings (`singleQuote`, `printWidth` 100,
   `trailingComma: all`).
 - CI (`.github/workflows/pages.yml`) runs type check, lint, tests, build and e2e on every push and
@@ -63,5 +69,5 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 ## What is missing
 
 See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a shape per
-archetype (also fixes colour blindness), keyboard play and settings, installable offline PWA, translations and a fixed simulation timestep. GPU cost of the renderer has
-not been measured on real hardware.
+archetype (also fixes colour blindness), installable offline PWA, translations and a fixed
+simulation timestep. GPU cost of the renderer has not been measured on real hardware.

@@ -87,7 +87,7 @@ Clicks answer with ripples and a little shake, and a hybrid carrying more archet
 before it slows time for a beat. The mind plays music: every note is in A minor pentatonic, bonds
 and births fall on a slow pulse, and a score of heartbeat, arpeggio and tension follows how big, how
 mixed and how threatened the mind is. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with
-real bloom, a shape per archetype that also fixes colour blindness, keyboard play, PWA offline
+real bloom, a shape per archetype that also fixes colour blindness, PWA offline
 support and translations.
 
 What is implemented, how it was verified and what is knowingly missing is in the
@@ -106,13 +106,17 @@ in English; contextual hints explain each mechanic the first time it matters.
 | Feed an idea      | hover it, or hold a finger on it                |
 | Stimulate an idea | click it for a burst of energy                  |
 | Banish a doubt    | click it                                        |
-| Change archetype  | the four archetype buttons on the left          |
-| Back to menu      | the home button (the mind is saved)             |
-| Mute / unmute     | the speaker button                              |
+| Change archetype  | the archetype buttons, or keys **1**–**4**      |
+| Pause             | **Esc** or **P**, or the pause button           |
+| Back to menu      | the home button, or the pause menu              |
+| Mute / unmute     | **M**, or the speaker button                    |
+| Fullscreen        | **F**, or the pause menu                        |
 | Save a portrait   | the image button (PNG of the current mind)      |
 
-There are no keyboard shortcuts yet — that is on the roadmap. The view respects
-`prefers-reduced-motion`: no trails, sway, particles, ripples, shake or slow motion when it is set.
+Pausing freezes the mind, its clock and its sound, and leaving the tab pauses too. The pause menu
+holds the settings: volume, sound, screen shake, full or reduced effects and fullscreen. The view
+also respects `prefers-reduced-motion`: no trails, sway, particles, ripples, shake or slow motion
+when it is set.
 
 ## Develop
 
@@ -125,7 +129,7 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (46 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (48 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 

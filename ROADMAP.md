@@ -40,7 +40,7 @@ cohesive, and a game that holds attention, not just a toy.
 
 ## Phase 4: product
 
-- [ ] Pause menu and settings (volume, quality, accessibility), keyboard shortcuts, fullscreen.
+- [x] Pause menu and settings (volume, quality, accessibility), keyboard shortcuts, fullscreen.
 - [ ] Installable offline PWA, real touch testing, Portuguese and English.
 - [ ] More insights, cross-session stats, e2e tests.
 - [ ] Fixed simulation timestep.
