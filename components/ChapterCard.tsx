@@ -1,5 +1,6 @@
 import React from 'react';
 import { ARCHETYPES } from '../constants';
+import { ArchetypeGlyph } from './ArchetypeGlyph';
 import { CHAPTERS, Chapter } from '../campaign';
 
 interface ChapterCardProps {
@@ -33,12 +34,13 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onDone }) => 
             {chapter.unlocks.map((type) => (
               <span
                 key={type}
-                className="px-3 py-1 rounded-full text-[11px] uppercase tracking-widest border"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest border"
                 style={{
                   borderColor: `hsla(${ARCHETYPES[type].hue}, 80%, 60%, 0.6)`,
                   color: `hsl(${ARCHETYPES[type].hue}, 80%, 75%)`,
                 }}
               >
+                <ArchetypeGlyph type={type} size={12} />
                 New: {ARCHETYPES[type].label}
               </span>
             ))}

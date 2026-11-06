@@ -1,8 +1,13 @@
 import { Doubt, IdeaNode, Particle, Vector2 } from '../types';
 import { ATTENTION_RADIUS } from './gameLogic';
 import { doubtRadius } from './doubts';
+import { traceShape } from './shapes';
+import { ARCHETYPES } from '../constants';
 
 export const BACKGROUND = '#050505';
+
+// Size of the archetype glyphs on a hybrid's ring
+const PIP_RADIUS = 2.4;
 
 const SWEEP_MS = 250;
 let lastSweep = 0;
@@ -141,22 +146,38 @@ export const drawFrame = (
     const glow = Math.max(0, Math.min(1, node.energy / 100));
     const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
 
+    // Body in the dominant archetype's silhouette
     ctx.beginPath();
-    ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
+    traceShape(ctx, node.type, node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5));
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Hybrids get a ring so they read as a different kind of idea
+    // Hybrids get a ring so they read as a different kind of idea, with a
+    // small glyph on it for every archetype they carry
     if (node.blend.length > 1) {
+      const ring = node.radius * 1.6;
       ctx.beginPath();
-      ctx.arc(node.pos.x, node.pos.y, node.radius * 1.6, 0, Math.PI * 2);
+      ctx.arc(node.pos.x, node.pos.y, ring, 0, Math.PI * 2);
       ctx.strokeStyle = `hsla(${node.hue}, 100%, 75%, ${0.3 + glow * 0.5})`;
       ctx.stroke();
+      node.blend.forEach((type, i) => {
+        const a = -Math.PI / 2 + (i / node.blend.length) * Math.PI * 2;
+        ctx.beginPath();
+        traceShape(
+          ctx,
+          type,
+          node.pos.x + Math.cos(a) * ring,
+          node.pos.y + Math.sin(a) * ring,
+          PIP_RADIUS,
+        );
+        ctx.fillStyle = `hsla(${ARCHETYPES[type].hue}, 100%, 70%, ${0.5 + glow * 0.5})`;
+        ctx.fill();
+      });
     }
 
     // Core
     ctx.beginPath();
-    ctx.arc(node.pos.x, node.pos.y, node.radius * 0.4, 0, Math.PI * 2);
+    traceShape(ctx, node.type, node.pos.x, node.pos.y, node.radius * 0.4);
     ctx.fillStyle = '#fff';
     ctx.fill();
 
