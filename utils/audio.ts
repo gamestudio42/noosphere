@@ -1,5 +1,15 @@
 import { Archetype } from '../types';
 import { ARCHETYPES } from '../constants';
+import {
+  Layers,
+  Mood,
+  arpeggioNote,
+  degreeHz,
+  layersFor,
+  nextStep,
+  noteFor,
+  stepSeconds,
+} from './music';
 
 // Singletons for the Audio Context
 let audioCtx: AudioContext | null = null;
@@ -8,6 +18,11 @@ let reverbNode: ConvolverNode | null = null;
 let reverbGain: GainNode | null = null;
 let ambienceGain: GainNode | null = null;
 let ambienceFilter: BiquadFilterNode | null = null;
+let tensionGain: GainNode | null = null;
+let tensionFilter: BiquadFilterNode | null = null;
+// Everything rhythmic is laid on one grid counted from this moment
+let gridOrigin = 0;
+let layers: Layers = layersFor({ size: 0, hybrids: 0, threat: 0 });
 
 const MASTER_VOLUME = 0.3;
 let muted = false;
@@ -64,6 +79,9 @@ const getCtx = () => {
       // Initialize Shared FX
       createSharedReverb(audioCtx);
       createAmbience(audioCtx);
+      createTension(audioCtx);
+      gridOrigin = audioCtx.currentTime;
+      window.setInterval(scheduleScore, SCHEDULER_MS);
     }
   }
   return audioCtx;
@@ -114,13 +132,104 @@ const createAmbience = (ctx: AudioContext) => {
   if (masterGain) ambienceGain.connect(masterGain);
 };
 
-// level 0..1, usually how full the mind is. No-op until audio has started.
-export const setAmbience = (level: number) => {
-  if (!audioCtx || !ambienceGain || !ambienceFilter) return;
+// A low A against a B-flat: a minor second that swells while the mind is under attack
+const createTension = (ctx: AudioContext) => {
+  tensionGain = ctx.createGain();
+  tensionGain.gain.value = 0;
+  tensionFilter = ctx.createBiquadFilter();
+  tensionFilter.type = 'lowpass';
+  tensionFilter.frequency.value = 300;
+  for (const freq of [110, 116.54]) {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    osc.connect(tensionFilter);
+    osc.start();
+  }
+  tensionFilter.connect(tensionGain);
+  if (masterGain) tensionGain.connect(masterGain);
+};
+
+// The score follows the mind: how full it is, how many hybrids live and how
+// hard it is pressed. No-op until audio has started.
+export const setMood = (mood: Mood) => {
+  layers = layersFor(mood);
+  if (!audioCtx || !ambienceGain || !ambienceFilter || !tensionGain || !tensionFilter) return;
   const t = audioCtx.currentTime;
-  const clamped = Math.max(0, Math.min(1, level));
-  ambienceGain.gain.setTargetAtTime(clamped > 0 ? 0.03 + clamped * 0.08 : 0, t, 1.5);
-  ambienceFilter.frequency.setTargetAtTime(200 + clamped * 700, t, 1.5);
+  const size = Math.max(0, Math.min(1, mood.size));
+  ambienceGain.gain.setTargetAtTime(layers.drone * 0.11, t, 1.5);
+  ambienceFilter.frequency.setTargetAtTime(200 + size * 700, t, 1.5);
+  tensionGain.gain.setTargetAtTime(layers.tension * 0.035, t, 0.8);
+  tensionFilter.frequency.setTargetAtTime(300 + layers.tension * 500, t, 0.8);
+};
+
+// Lookahead scheduler: a timer wakes often and books the score's notes a
+// little ahead on the audio clock, so timing stays exact even if the timer
+// is late
+const SCHEDULER_MS = 25;
+const LOOKAHEAD_S = 0.12;
+let nextScoreStep = 0;
+
+const scheduleScore = () => {
+  if (!audioCtx || audioCtx.state !== 'running' || !audible()) return;
+  const until = audioCtx.currentTime + LOOKAHEAD_S;
+  // Never schedule in the past (after a suspend the clock has moved on)
+  const first = nextStep(audioCtx.currentTime, gridOrigin);
+  if (nextScoreStep < first.index) nextScoreStep = first.index;
+  for (;;) {
+    const time = gridOrigin + nextScoreStep * stepSeconds();
+    if (time >= until) break;
+    playStep(nextScoreStep, time);
+    nextScoreStep++;
+  }
+};
+
+const playStep = (index: number, time: number) => {
+  // Heartbeat on every beat; under attack it doubles into lub-dub
+  if (index % 4 === 0 && layers.pulse > 0.02) heartbeat(time, layers.pulse);
+  if (index % 4 === 2 && layers.tension > 0.3) heartbeat(time, layers.tension * 0.6);
+  // Eighth-note arpeggio once a few hybrids are alive
+  if (index % 2 === 0 && layers.arpeggio > 0.02) pluck(arpeggioNote(index), time, layers.arpeggio);
+};
+
+// One short-lived voice: oscillator -> envelope -> dry and reverb sends
+const voice = (
+  ctx: AudioContext,
+  type: OscillatorType,
+  time: number,
+  length: number,
+  peak: number,
+  wet: boolean,
+) => {
+  const osc = ctx.createOscillator();
+  osc.type = type;
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0, time);
+  env.gain.linearRampToValueAtTime(peak, time + 0.01);
+  env.gain.exponentialRampToValueAtTime(0.0001, time + length);
+  osc.connect(env);
+  if (masterGain) env.connect(masterGain);
+  if (wet && reverbNode) env.connect(reverbNode);
+  osc.start(time);
+  osc.stop(time + length + 0.05);
+  osc.onended = () => {
+    osc.disconnect();
+    env.disconnect();
+  };
+  return osc;
+};
+
+const heartbeat = (time: number, level: number) => {
+  if (!audioCtx) return;
+  const osc = voice(audioCtx, 'sine', time, 0.28, 0.32 * level, false);
+  osc.frequency.setValueAtTime(62, time);
+  osc.frequency.exponentialRampToValueAtTime(38, time + 0.2);
+};
+
+const pluck = (freq: number, time: number, level: number) => {
+  if (!audioCtx) return;
+  const osc = voice(audioCtx, 'triangle', time, 0.6, 0.035 * level, true);
+  osc.frequency.setValueAtTime(freq, time);
 };
 
 export const isMuted = () => muted;
@@ -133,7 +242,15 @@ export const setMuted = (value: boolean) => {
   syncContext();
 };
 
-export const playTone = (type: Archetype, energy: number = 0.5) => {
+// At most this many automatic notes start on one sixteenth, so a burst of
+// bonds plays as a chord instead of a smear
+const MAX_NOTES_PER_STEP = 3;
+const notesPerStep = new Map<number, number>();
+
+// An idea's note, always in key. Player actions sound at once; automatic
+// events (bonds, splits, births) wait for the next sixteenth so the mind
+// keeps time.
+export const playTone = (type: Archetype, energy: number = 0.5, onBeat = false) => {
   // 1. Safety Limit (Polyphony)
   if (!audible() || activeVoices > MAX_POLYPHONY) return;
 
@@ -141,20 +258,23 @@ export const playTone = (type: Archetype, energy: number = 0.5) => {
   if (!ctx || !masterGain || !reverbNode) return;
   if (ctx.state === 'suspended') ctx.resume();
 
+  let t = ctx.currentTime;
+  if (onBeat) {
+    const step = nextStep(t + 0.01, gridOrigin);
+    const count = notesPerStep.get(step.index) ?? 0;
+    if (count >= MAX_NOTES_PER_STEP) return;
+    notesPerStep.set(step.index, count + 1);
+    if (notesPerStep.size > 64) notesPerStep.delete(notesPerStep.keys().next().value!);
+    t = step.time;
+  }
+
   activeVoices++;
-
   const config = ARCHETYPES[type];
-  const t = ctx.currentTime;
 
-  // 2. Oscillator (The Sound Source)
+  // 2. Oscillator: a note of the scale in this archetype's register
   const osc = ctx.createOscillator();
   osc.type = config.soundType;
-
-  // Detune slightly for organic feel
-  const variance = (Math.random() - 0.5) * 10;
-  // Harmonic series based on energy
-  const harmonic = Math.floor(Math.random() * 4) + 1;
-  osc.frequency.setValueAtTime(config.baseFreq * (energy > 0.8 ? harmonic : 1) + variance, t);
+  osc.frequency.setValueAtTime(noteFor(type, energy, Math.random()), t);
 
   // 3. Envelope (Volume Shape)
   const env = ctx.createGain();
@@ -181,21 +301,24 @@ export const playTone = (type: Archetype, energy: number = 0.5) => {
   osc.stop(stopTime);
 
   // Garbage Collection Helper
-  setTimeout(() => {
-    osc.disconnect();
-    filter.disconnect();
-    env.disconnect();
-    activeVoices--;
-  }, 3100);
+  setTimeout(
+    () => {
+      osc.disconnect();
+      filter.disconnect();
+      env.disconnect();
+      activeVoices--;
+    },
+    (t - ctx.currentTime) * 1000 + 3100,
+  );
 };
 
 // Hybrids sound as a chord of every archetype they carry
-export const playBlend = (blend: Archetype[], energy: number = 0.5) => {
-  if (blend.length === 1) return playTone(blend[0], energy);
-  blend.forEach((type) => playTone(type, energy * 0.7));
+export const playBlend = (blend: Archetype[], energy: number = 0.5, onBeat = false) => {
+  if (blend.length === 1) return playTone(blend[0], energy, onBeat);
+  blend.forEach((type) => playTone(type, energy * 0.7, onBeat));
 };
 
-// Short non-musical cues for game events
+// Short cues for game events. Doubt and denied stay out of key on purpose.
 type Cue = 'denied' | 'doubt' | 'banish' | 'chapter';
 
 const CUES: Record<
@@ -204,8 +327,14 @@ const CUES: Record<
 > = {
   denied: { freqs: [70], type: 'sine', length: 0.25, gain: 0.25, glide: 0.6 },
   doubt: { freqs: [92, 97.5], type: 'sawtooth', length: 1.6, gain: 0.06 }, // detuned, uneasy
-  banish: { freqs: [660, 990], type: 'triangle', length: 0.8, gain: 0.08, glide: 1.5 },
-  chapter: { freqs: [220, 277.2, 329.6, 440], type: 'sine', length: 3.5, gain: 0.07 },
+  banish: { freqs: [degreeHz(16), degreeHz(19)], type: 'triangle', length: 0.8, gain: 0.08 }, // C5, G5
+  // A minor with the octave, rolled
+  chapter: {
+    freqs: [degreeHz(10), degreeHz(11), degreeHz(13), degreeHz(15)],
+    type: 'sine',
+    length: 3.5,
+    gain: 0.07,
+  },
 };
 
 export const playCue = (cue: Cue) => {
