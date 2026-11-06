@@ -81,6 +81,53 @@ export const createNode = (
 
 const distance = (a: Vector2, b: Vector2) => Math.hypot(a.x - b.x, a.y - b.y);
 
+// Pairwise forces: repulsion reaches 200px, affinity and gravity their own ranges.
+// Pairs further apart than the longest of them feel nothing, so the grid below
+// only visits neighbouring cells of this size.
+const REPULSION_RANGE = 200;
+const FORCE_RANGE = Math.max(REPULSION_RANGE, PHYSICS.AFFINITY_RANGE, PHYSICS.GRAVITY_RANGE);
+const FORCE_RANGE_SQ = FORCE_RANGE * FORCE_RANGE;
+
+// A blend as a 4-bit mask, one bit per archetype
+const blendMask = (blend: Archetype[]) => {
+  let mask = 0;
+  for (const t of blend) mask |= 1 << ARCHETYPE_ORDER.indexOf(t);
+  return mask;
+};
+
+// Affinity only depends on the two blends: 16 x 16 masks, filled on first use
+const affinityTable = new Float64Array(256).fill(NaN);
+const archetypesOf = (mask: number) => ARCHETYPE_ORDER.filter((_, i) => mask & (1 << i));
+const affinityByMask = (a: number, b: number) => {
+  const key = (a << 4) | b;
+  let value = affinityTable[key];
+  if (value !== value) {
+    value = affinityBetween(archetypesOf(a), archetypesOf(b));
+    affinityTable[key] = value;
+  }
+  return value;
+};
+
+// Buckets node indices into square cells (a counting sort, no per-cell arrays)
+const buildGrid = (nodes: IdeaNode[], width: number, height: number) => {
+  const cols = Math.max(1, Math.ceil(width / FORCE_RANGE));
+  const rows = Math.max(1, Math.ceil(height / FORCE_RANGE));
+  const cellOf = new Int32Array(nodes.length);
+  const start = new Int32Array(cols * rows + 1);
+  for (let i = 0; i < nodes.length; i++) {
+    const cx = Math.min(cols - 1, Math.max(0, Math.floor(nodes[i].pos.x / FORCE_RANGE)));
+    const cy = Math.min(rows - 1, Math.max(0, Math.floor(nodes[i].pos.y / FORCE_RANGE)));
+    const cell = cy * cols + cx;
+    cellOf[i] = cell;
+    start[cell + 1]++;
+  }
+  for (let c = 0; c < cols * rows; c++) start[c + 1] += start[c];
+  const fill = start.slice(0, cols * rows);
+  const order = new Int32Array(nodes.length);
+  for (let i = 0; i < nodes.length; i++) order[fill[cellOf[i]]++] = i;
+  return { cols, rows, start, order, cellOf };
+};
+
 // dt is measured in 60fps frames (1 = 16.67ms), so constants keep their original tuning
 export const updatePhysics = (
   nodes: IdeaNode[],
@@ -91,34 +138,43 @@ export const updatePhysics = (
   attention: Vector2 | null,
   onEvent: (event: SimEvent) => void,
 ): { nodes: IdeaNode[]; particles: Particle[]; fed: number } => {
-  let nextNodes = [...nodes];
+  let nextNodes = nodes;
   // How many ideas the cursor fed this frame (feeding costs focus)
   let fed = 0;
 
-  // 1. Particle Physics
-  particles.forEach((p) => {
+  // 1. Particle Physics (compacted in place)
+  let alive = 0;
+  for (const p of particles) {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.life -= 0.02 * dt;
-  });
-  const nextParticles = particles.filter((p) => p.life > 0);
+    if (p.life > 0) particles[alive++] = p;
+  }
+  particles.length = alive;
+  const nextParticles = particles;
 
   const nodeMap = new Map<string, IdeaNode>();
   for (const n of nextNodes) nodeMap.set(n.id, n);
 
-  // Affinity only depends on the two blends, so cache it per frame
-  const affinityCache = new Map<string, number>();
-  const affinity = (a: IdeaNode, b: IdeaNode) => {
-    const key = `${a.blend.join('|')}>${b.blend.join('|')}`;
-    let value = affinityCache.get(key);
-    if (value === undefined) {
-      value = affinityBetween(a.blend, b.blend);
-      affinityCache.set(key, value);
-    }
-    return value;
-  };
+  // Flat copies for the pair loop; xs/ys are kept in step as nodes move
+  const count = nextNodes.length;
+  const masks = new Int32Array(count);
+  const xs = new Float64Array(count);
+  const ys = new Float64Array(count);
+  const gravity = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    const n = nextNodes[i];
+    masks[i] = blendMask(n.blend);
+    xs[i] = n.pos.x;
+    ys[i] = n.pos.y;
+    gravity[i] = n.traits.gravity;
+  }
+  const grid = buildGrid(nextNodes, width, height);
 
   const drag = Math.pow(PHYSICS.DRAG, dt);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const keepInRange = Math.min(width, height) * 0.4;
 
   // 2. Node Physics
   for (let i = 0; i < nextNodes.length; i++) {
@@ -137,36 +193,48 @@ export const updatePhysics = (
     let fx = 0;
     let fy = 0;
 
-    for (let j = 0; j < nextNodes.length; j++) {
-      if (i === j) continue;
-      const other = nextNodes[j];
-      const d = distance(node.pos, other.pos);
-      if (d === 0) continue;
-      // Unit vector pointing from node to other
-      const ux = (other.pos.x - node.pos.x) / d;
-      const uy = (other.pos.y - node.pos.y) / d;
+    const cell = grid.cellOf[i];
+    const cx = cell % grid.cols;
+    const cy = (cell - cx) / grid.cols;
+    for (let gy = Math.max(0, cy - 1); gy <= Math.min(grid.rows - 1, cy + 1); gy++) {
+      for (let gx = Math.max(0, cx - 1); gx <= Math.min(grid.cols - 1, cx + 1); gx++) {
+        const c = gy * grid.cols + gx;
+        for (let k = grid.start[c]; k < grid.start[c + 1]; k++) {
+          const j = grid.order[k];
+          if (i === j) continue;
+          const dx = xs[j] - xs[i];
+          const dy = ys[j] - ys[i];
+          const d2 = dx * dx + dy * dy;
+          if (d2 === 0 || d2 >= FORCE_RANGE_SQ) continue;
+          const d = Math.sqrt(d2);
+          // Unit vector pointing from node to other
+          const ux = dx / d;
+          const uy = dy / d;
 
-      // Repulsion (Coulomb)
-      if (d < 200) {
-        const force = PHYSICS.REPULSION / (d * d);
-        fx -= ux * force;
-        fy -= uy * force;
-      }
+          // Repulsion (Coulomb)
+          if (d < REPULSION_RANGE) {
+            const force = PHYSICS.REPULSION / d2;
+            fx -= ux * force;
+            fy -= uy * force;
+          }
 
-      // Affinity: like-minded ideas drift together, opposed ones apart
-      if (d < PHYSICS.AFFINITY_RANGE) {
-        const force =
-          affinity(node, other) * PHYSICS.AFFINITY_FORCE * (1 - d / PHYSICS.AFFINITY_RANGE);
-        fx += ux * force;
-        fy += uy * force;
-      }
+          // Affinity: like-minded ideas drift together, opposed ones apart
+          if (d < PHYSICS.AFFINITY_RANGE) {
+            const force =
+              affinityByMask(masks[i], masks[j]) *
+              PHYSICS.AFFINITY_FORCE *
+              (1 - d / PHYSICS.AFFINITY_RANGE);
+            fx += ux * force;
+            fy += uy * force;
+          }
 
-      // Gravity of heavy (instinctive) ideas
-      if (other.traits.gravity > 0 && d < PHYSICS.GRAVITY_RANGE) {
-        const force =
-          other.traits.gravity * PHYSICS.GRAVITY_FORCE * (1 - d / PHYSICS.GRAVITY_RANGE);
-        fx += ux * force;
-        fy += uy * force;
+          // Gravity of heavy (instinctive) ideas
+          if (gravity[j] > 0 && d < PHYSICS.GRAVITY_RANGE) {
+            const force = gravity[j] * PHYSICS.GRAVITY_FORCE * (1 - d / PHYSICS.GRAVITY_RANGE);
+            fx += ux * force;
+            fy += uy * force;
+          }
+        }
       }
     }
 
@@ -185,10 +253,7 @@ export const updatePhysics = (
     });
 
     // Center Gravity (Keep them on screen)
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const distCenter = distance(node.pos, { x: centerX, y: centerY });
-    if (distCenter > Math.min(width, height) * 0.4) {
+    if (Math.hypot(node.pos.x - centerX, node.pos.y - centerY) > keepInRange) {
       fx += (centerX - node.pos.x) * 0.0005;
       fy += (centerY - node.pos.y) * 0.0005;
     }
@@ -223,6 +288,8 @@ export const updatePhysics = (
       node.pos.y = height;
       node.vel.y = -Math.abs(node.vel.y);
     }
+    xs[i] = node.pos.x;
+    ys[i] = node.pos.y;
 
     // CRITICAL: Clamp Energy to prevent infinite values and gradient crashes
     node.energy = Math.max(0, Math.min(node.energy, 100));
@@ -316,13 +383,14 @@ export const updatePhysics = (
     }
   }
 
-  // 4. Cleanup Death
-  nextNodes = [...nextNodes, ...newNodes].filter((n) => n.energy > 0);
-  // Remove dead connections
-  const activeIds = new Set(nextNodes.map((n) => n.id));
-  nextNodes.forEach((n) => {
-    n.connections = n.connections.filter((id) => activeIds.has(id));
-  });
+  // 4. Cleanup Death (only rebuild lists when something was born or died)
+  if (newNodes.length > 0) nextNodes = nextNodes.concat(newNodes);
+  if (nextNodes.some((n) => n.energy <= 0)) {
+    nextNodes = nextNodes.filter((n) => n.energy > 0);
+    // Remove dead connections
+    const activeIds = new Set(nextNodes.map((n) => n.id));
+    for (const n of nextNodes) n.connections = n.connections.filter((id) => activeIds.has(id));
+  }
 
   return { nodes: nextNodes, particles: nextParticles, fed };
 };

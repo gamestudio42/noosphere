@@ -15,11 +15,31 @@ interface FrameOptions {
   reducedMotion: boolean;
 }
 
-// Stable per-connection phase so synapses undulate instead of flickering
-const phaseFor = (key: string) => {
-  let h = 0;
-  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
-  return (((h >>> 0) % 1000) / 1000) * Math.PI * 2;
+// Stable per-idea phase so synapses undulate instead of flickering
+const phases = new Map<string, number>();
+const phaseFor = (id: string) => {
+  let phase = phases.get(id);
+  if (phase === undefined) {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+    phase = (((h >>> 0) % 1000) / 1000) * Math.PI * 2;
+    // Ids are never reused; forget the dead now and then
+    if (phases.size > 4000) phases.clear();
+    phases.set(id, phase);
+  }
+  return phase;
+};
+
+// Synapses whose ends look alike are drawn in one path per colour; only
+// those joining clearly different ends pay for their own gradient.
+const HUE_STEP = 6;
+const ALPHA_STEPS = 12;
+const GRADIENT_HUE = 18;
+const GRADIENT_ALPHA = 0.2;
+
+const hueGap = (a: number, b: number) => {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
 };
 
 export const drawFrame = (
@@ -47,8 +67,7 @@ export const drawFrame = (
 
   ctx.globalCompositeOperation = 'lighter';
 
-  // PERFORMANCE FIX: Create a Map for O(1) lookups
-  // When we have 150 nodes, finding by ID in a loop creates lag (O(N^2) or worse).
+  // Synapses look their ends up by id
   const nodeMap = new Map<string, IdeaNode>();
   for (const n of nodes) {
     nodeMap.set(n.id, n);
@@ -56,27 +75,18 @@ export const drawFrame = (
 
   // Draw Connections (Synapses)
   ctx.lineWidth = 1;
-  const drawnConnections = new Set<string>();
+  // Flat curve coordinates (x0, y0, cx, cy, x1, y1) per colour
+  const batches = new Map<string, number[]>();
 
-  nodes.forEach((node) => {
-    node.connections.forEach((targetId) => {
-      const target = nodeMap.get(targetId); // O(1) Lookup
-      if (!target) return;
-      const key = node.id < target.id ? `${node.id}-${target.id}` : `${target.id}-${node.id}`;
-      if (drawnConnections.has(key)) return;
-      drawnConnections.add(key);
+  for (const node of nodes) {
+    for (const targetId of node.connections) {
+      const target = nodeMap.get(targetId);
+      if (!target) continue;
+      // Each bond is listed by both ends: draw it once, from the smaller id
+      if (node.id > target.id && target.connections.includes(node.id)) continue;
 
-      // Safety check for gradients
       const energyA = Math.max(0, Math.min(1, node.energy / 100));
       const energyB = Math.max(0, Math.min(1, target.energy / 100));
-
-      const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
-      grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
-      grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
-
-      ctx.strokeStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(node.pos.x, node.pos.y);
 
       // Gentle curve that sways perpendicular to the synapse
       const dx = target.pos.x - node.pos.x;
@@ -84,14 +94,47 @@ export const drawFrame = (
       const len = Math.hypot(dx, dy) || 1;
       const sway = reducedMotion
         ? 0
-        : Math.min(8, len * 0.08) * Math.sin(time * 0.0015 + phaseFor(key));
+        : Math.min(8, len * 0.08) *
+          Math.sin(time * 0.0015 + phaseFor(node.id) + phaseFor(target.id));
       const midX = (node.pos.x + target.pos.x) / 2 - (dy / len) * sway;
       const midY = (node.pos.y + target.pos.y) / 2 + (dx / len) * sway;
-      ctx.quadraticCurveTo(midX, midY, target.pos.x, target.pos.y);
 
-      ctx.stroke();
-    });
-  });
+      if (
+        hueGap(node.hue, target.hue) > GRADIENT_HUE ||
+        Math.abs(energyA - energyB) > GRADIENT_ALPHA
+      ) {
+        const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
+        grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
+        grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(node.pos.x, node.pos.y);
+        ctx.quadraticCurveTo(midX, midY, target.pos.x, target.pos.y);
+        ctx.stroke();
+        continue;
+      }
+
+      // Midway round the colour wheel (signed, so 350 and 10 meet at 0)
+      const turn = ((((target.hue - node.hue) % 360) + 540) % 360) - 180;
+      const hue = Math.round((node.hue + turn / 2) / HUE_STEP) * HUE_STEP;
+      const alpha = Math.round(((energyA + energyB) / 2) * ALPHA_STEPS) / ALPHA_STEPS;
+      if (alpha === 0) continue;
+      const key = `hsla(${hue}, 80%, 50%, ${alpha})`;
+      let batch = batches.get(key);
+      if (!batch) batches.set(key, (batch = []));
+      batch.push(node.pos.x, node.pos.y, midX, midY, target.pos.x, target.pos.y);
+    }
+  }
+
+  for (const [color, curves] of batches) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < curves.length; i += 6) {
+      ctx.moveTo(curves[i], curves[i + 1]);
+      ctx.quadraticCurveTo(curves[i + 2], curves[i + 3], curves[i + 4], curves[i + 5]);
+    }
+    ctx.stroke();
+  }
 
   // Draw Nodes
   nodes.forEach((node) => {
@@ -129,7 +172,8 @@ export const drawFrame = (
     }
   });
 
-  // Draw Particles
+  // Draw Particles. Batching them by colour measured slower than this: most
+  // share one colour already, and the canvas skips redundant state changes.
   particles.forEach((p) => {
     ctx.fillStyle = p.color;
     ctx.globalAlpha = p.life;

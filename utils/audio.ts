@@ -11,6 +11,38 @@ let ambienceFilter: BiquadFilterNode | null = null;
 
 const MASTER_VOLUME = 0.3;
 let muted = false;
+// Whether a mind is on screen; the menu has no sound
+let boardActive = false;
+
+// Once started, the drone and the reverb keep the audio thread busy even when
+// silent, so the context is suspended whenever nothing can be heard.
+const SUSPEND_DELAY_MS = 400; // lets the mute fade and short tails finish
+let suspendTimer: ReturnType<typeof setTimeout> | undefined;
+
+const audible = () =>
+  !muted &&
+  boardActive &&
+  (typeof document === 'undefined' || document.visibilityState !== 'hidden');
+
+const syncContext = () => {
+  if (!audioCtx) return;
+  clearTimeout(suspendTimer);
+  if (audible()) {
+    if (audioCtx.state === 'suspended') void audioCtx.resume();
+  } else {
+    suspendTimer = setTimeout(() => {
+      if (audioCtx && !audible() && audioCtx.state === 'running') void audioCtx.suspend();
+    }, SUSPEND_DELAY_MS);
+  }
+};
+
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', syncContext);
+
+// Called by the board as it mounts and unmounts
+export const setAudioActive = (active: boolean) => {
+  boardActive = active;
+  syncContext();
+};
 
 // Polyphony Management to prevent crashes
 let activeVoices = 0;
@@ -98,11 +130,12 @@ export const setMuted = (value: boolean) => {
   if (audioCtx && masterGain) {
     masterGain.gain.setTargetAtTime(muted ? 0 : MASTER_VOLUME, audioCtx.currentTime, 0.05);
   }
+  syncContext();
 };
 
 export const playTone = (type: Archetype, energy: number = 0.5) => {
   // 1. Safety Limit (Polyphony)
-  if (muted || activeVoices > MAX_POLYPHONY) return;
+  if (!audible() || activeVoices > MAX_POLYPHONY) return;
 
   const ctx = getCtx();
   if (!ctx || !masterGain || !reverbNode) return;
@@ -176,7 +209,7 @@ const CUES: Record<
 };
 
 export const playCue = (cue: Cue) => {
-  if (muted || activeVoices > MAX_POLYPHONY) return;
+  if (!audible() || activeVoices > MAX_POLYPHONY) return;
   const ctx = getCtx();
   if (!ctx || !masterGain || !reverbNode) return;
   if (ctx.state === 'suspended') ctx.resume();

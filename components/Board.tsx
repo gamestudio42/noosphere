@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { PHYSICS, FOCUS, DOUBT } from '../constants';
-import { playTone, playBlend, playCue, setAmbience } from '../utils/audio';
+import { playTone, playBlend, playCue, setAmbience, setAudioActive } from '../utils/audio';
 import { canAfford, drainFocus, regenFocus } from '../utils/focus';
 import { doubtAt, maxDoubts, spawnDoubt, spawnInterval, updateDoubts } from '../utils/doubts';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
@@ -39,6 +39,9 @@ const MAX_DT = 3;
 const STATS_INTERVAL_MS = 250;
 // How often the mind is saved to local storage
 const SAVE_INTERVAL_MS = 5000;
+// The trail fade touches every pixel each frame. Past 2x the extra sharpness
+// on soft glows is invisible, while the fill cost grows with the square.
+const MAX_PIXEL_RATIO = 2;
 
 export const Board: React.FC<BoardProps> = ({
   mode,
@@ -341,7 +344,7 @@ export const Board: React.FC<BoardProps> = ({
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
       const width = window.innerWidth;
       const height = window.innerHeight;
       // A hidden or collapsed view can report a zero size; scaling by it
@@ -352,9 +355,9 @@ export const Board: React.FC<BoardProps> = ({
       if (prev.width !== width || prev.height !== height) {
         const sx = width / prev.width;
         const sy = height / prev.height;
-        for (const n of nodesRef.current) {
-          n.pos.x *= sx;
-          n.pos.y *= sy;
+        for (const thing of [...nodesRef.current, ...doubtsRef.current]) {
+          thing.pos.x *= sx;
+          thing.pos.y *= sy;
         }
       }
       sizeRef.current = { width, height };
@@ -372,6 +375,7 @@ export const Board: React.FC<BoardProps> = ({
 
     window.addEventListener('resize', handleResize);
     motionQuery.addEventListener('change', handleMotion);
+    setAudioActive(true);
     handleResize();
     lastFrameRef.current = null;
     requestRef.current = requestAnimationFrame(animate);
@@ -381,6 +385,7 @@ export const Board: React.FC<BoardProps> = ({
       motionQuery.removeEventListener('change', handleMotion);
       cancelAnimationFrame(requestRef.current);
       setAmbience(0);
+      setAudioActive(false);
     };
     // The loop reads everything through refs, so it is started exactly once
     // eslint-disable-next-line react-hooks/exhaustive-deps
