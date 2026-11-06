@@ -29,9 +29,9 @@ cohesive, and a game that holds attention, not just a toy.
 ## Phase 2: visuals and game feel
 
 - [ ] WebGL renderer (PixiJS or custom shaders) with bloom, layered neural background and thousands of particles.
-- [ ] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
-- [ ] A shape per archetype as well as a colour (also fixes colour blindness).
-- [ ] Screen shake and stronger click feedback.
+- [x] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
+- [x] A shape per archetype as well as a colour (also fixes colour blindness).
+- [x] Screen shake and stronger click feedback.
 
 ## Phase 3: audio
 
