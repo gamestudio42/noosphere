@@ -84,9 +84,11 @@ doubts. Nine insights track milestones in a session; the mind is saved and expor
 portrait.
 
 Clicks answer with ripples and a little shake, and a hybrid carrying more archetypes than any
-before it slows time for a beat. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with real
-bloom, a shape per archetype that also fixes colour blindness, keyboard play, music locked to a
-scale, PWA offline support and translations.
+before it slows time for a beat. The mind plays music: every note is in A minor pentatonic, bonds
+and births fall on a slow pulse, and a score of heartbeat, arpeggio and tension follows how big, how
+mixed and how threatened the mind is. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with
+real bloom, a shape per archetype that also fixes colour blindness, keyboard play, PWA offline
+support and translations.
 
 What is implemented, how it was verified and what is knowingly missing is in the
 [project status](docs/STATUS.md); open work is in [TASKS.md](TASKS.md).
@@ -123,13 +125,13 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (40 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (46 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 
 The simulation lives in `utils/gameLogic.ts` and is pure apart from the swappable RNG in
 `utils/random.ts`. `utils/renderer.ts` draws the canvas and exports the PNG, `utils/audio.ts` plays
-the tones and the ambient drone, and `components/Board.tsx` owns the animation loop and input. See
+the notes, cues and adaptive score from the scale and pulse in `utils/music.ts`, and `components/Board.tsx` owns the animation loop and input. See
 the [roadmap](ROADMAP.md), the [project status](docs/STATUS.md), the [tasks](TASKS.md), the
 [asset register](ASSETS.md), the [architecture](docs/architecture/overview.md), the
 [decisions](docs/decisions/), the [rules for agents](AGENTS.md) and `.gs42/standards/` for the

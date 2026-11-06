@@ -13,7 +13,6 @@
   Tried as square, circle, star and triangle and reverted: the mind reads better as circles for
   now.
 - Keyboard play, pause menu, settings (volume, quality) and fullscreen (ROADMAP phase 4).
-- Every note locked to a scale and a pulse, plus an adaptive score (ROADMAP phase 3).
 - Installable offline PWA; self-host Space Grotesk so the build no longer needs Google Fonts.
 - Portuguese strings and a locale switch (ROADMAP phase 4).
 - Fixed simulation timestep (ROADMAP phase 4).
@@ -29,6 +28,7 @@
 - Campaign with five chapters, objectives and per-chapter saves; holds forgive dips under 5 s.
 - Ripples, screen shake and hero moments for new hybrid blends.
 - Spatial grid and affinity table for physics; audio suspended when nothing is audible.
+- Music in A minor pentatonic on an 84 BPM pulse, with an adaptive score.
 - Focus as a resource, doubts as threats, hybrids with traits and affinities.
 - HUD, nine insights, extinction screen, PNG portrait export, reduced motion.
 - Static build published to GitHub Pages by CI, with pull request previews.

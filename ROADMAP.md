@@ -12,7 +12,7 @@ cohesive, and a game that holds attention, not just a toy.
 | Onboarding    | 2/10  | The intro drops you into an empty screen. Hybrids and affinities are never taught.                             |
 | Visuals       | 5/10  | Pretty but generic Canvas 2D glow circles. No real bloom, depth, living background or hero moments.            |
 | Game feel     | 3/10  | No screen shake, slow motion or birth animations. Weak click feedback.                                         |
-| Audio         | 4/10  | Loose oscillators, not locked to a scale or pulse. No adaptive music.                                          |
+| Audio         | 4/10  | Loose oscillators, not locked to a scale or pulse. No adaptive music. (Phase 3 done since.)                    |
 | UI            | 4/10  | No pause menu, settings, fullscreen or keyboard shortcuts.                                                     |
 | Accessibility | 3/10  | Archetypes differ by colour only. Not keyboard playable. Reduced motion handled.                               |
 | Content       | 3/10  | 4 archetypes, 8 insights, one mode.                                                                            |
@@ -35,8 +35,8 @@ cohesive, and a game that holds attention, not just a toy.
 
 ## Phase 3: audio
 
-- [ ] Every note locked to a scale and a pulse so the mind plays music.
-- [ ] Adaptive score: layers enter as the mind grows, tension when it is dying or under attack.
+- [x] Every note locked to a scale and a pulse so the mind plays music.
+- [x] Adaptive score: layers enter as the mind grows, tension when it is dying or under attack.
 
 ## Phase 4: product
 

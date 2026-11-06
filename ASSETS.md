@@ -3,7 +3,7 @@
 | Asset                                          | Location                                                           | Author / origin | License           |
 | ---------------------------------------------- | ------------------------------------------------------------------ | --------------- | ----------------- |
 | Ideas, hybrids, doubts, synapses, trails, glow | Drawn procedurally in `utils/renderer.ts` and `utils/gameLogic.ts` | Original        | AGPL-3.0-or-later |
-| Sounds: tones, chords, drone, cues             | Synthesized at runtime with WebAudio in `utils/audio.ts`           | Original        | AGPL-3.0-or-later |
+| Sounds: notes, cues, drone and adaptive score  | Synthesized at runtime with WebAudio in `utils/audio.ts`           | Original        | AGPL-3.0-or-later |
 | Emblem and favicon                             | `public/icon.svg`                                                  | Original        | AGPL-3.0-or-later |
 | "Play in the browser" button                   | `docs/screenshots/play.svg`                                        | Original        | AGPL-3.0-or-later |
 | Documentation screenshots                      | `docs/screenshots/*.jpg`, captured from this build with Playwright | Original        | AGPL-3.0-or-later |
