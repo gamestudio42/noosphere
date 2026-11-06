@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { PHYSICS, FOCUS, DOUBT } from '../constants';
-import { playTone, playBlend, playCue, setAmbience } from '../utils/audio';
+import { playTone, playBlend, playCue, setAmbience, setAudioActive } from '../utils/audio';
 import { canAfford, drainFocus, regenFocus } from '../utils/focus';
 import { doubtAt, maxDoubts, spawnDoubt, spawnInterval, updateDoubts } from '../utils/doubts';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
@@ -375,6 +375,7 @@ export const Board: React.FC<BoardProps> = ({
 
     window.addEventListener('resize', handleResize);
     motionQuery.addEventListener('change', handleMotion);
+    setAudioActive(true);
     handleResize();
     lastFrameRef.current = null;
     requestRef.current = requestAnimationFrame(animate);
@@ -384,6 +385,7 @@ export const Board: React.FC<BoardProps> = ({
       motionQuery.removeEventListener('change', handleMotion);
       cancelAnimationFrame(requestRef.current);
       setAmbience(0);
+      setAudioActive(false);
     };
     // The loop reads everything through refs, so it is started exactly once
     // eslint-disable-next-line react-hooks/exhaustive-deps
