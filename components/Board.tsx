@@ -39,6 +39,9 @@ const MAX_DT = 3;
 const STATS_INTERVAL_MS = 250;
 // How often the mind is saved to local storage
 const SAVE_INTERVAL_MS = 5000;
+// The trail fade touches every pixel each frame. Past 2x the extra sharpness
+// on soft glows is invisible, while the fill cost grows with the square.
+const MAX_PIXEL_RATIO = 2;
 
 export const Board: React.FC<BoardProps> = ({
   mode,
@@ -341,7 +344,7 @@ export const Board: React.FC<BoardProps> = ({
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
       const width = window.innerWidth;
       const height = window.innerHeight;
       // A hidden or collapsed view can report a zero size; scaling by it
