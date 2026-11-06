@@ -128,6 +128,30 @@ describe('updatePhysics', () => {
     if (hybrid?.kind === 'hybrid') expect(hybrid.node.blend).toEqual(['RATIONAL', 'CREATIVE']);
   });
 
+  it('applies pair forces across grid cells but not beyond their range', () => {
+    // A big board so the pull toward the centre stays out of the way.
+    // 210px apart, on either side of a cell edge (cells are 220px)
+    const a = createNode(900, 1000, 'RATIONAL');
+    const b = createNode(1110, 1000, 'RATIONAL');
+    // Over 300px from both: out of range of every pair force
+    const far = createNode(1000, 1300, 'RATIONAL');
+    for (const n of [a, b, far]) n.vel = { x: 0, y: 0 };
+    updatePhysics([a, b, far], [], 2000, 2000, 1, null, () => {});
+    expect(a.vel.x).not.toBe(0);
+    // Nodes move in turn, so the second one sees a slightly closer neighbour
+    expect(b.vel.x).toBeCloseTo(-a.vel.x, 6);
+    expect(far.vel).toEqual({ x: 0, y: 0 });
+  });
+
+  it('drops spent particles', () => {
+    const particles = [
+      { x: 0, y: 0, vx: 0, vy: 0, life: 0.01, color: '#fff' },
+      { x: 0, y: 0, vx: 0, vy: 0, life: 1, color: '#fff' },
+    ];
+    const next = updatePhysics([], particles, W, H, 1, null, () => {}).particles;
+    expect(next.map((p) => p.life)).toEqual([0.98]);
+  });
+
   it('is deterministic for a given seed', () => {
     const run = () => {
       setRandom(seededRandom(7));
