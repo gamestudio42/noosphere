@@ -65,15 +65,12 @@ Two ways in: the campaign, or the sandbox with no focus cost.
 
 ### Archetypes
 
-| Archetype | Shape           | Behaviour                                                          |
-| --------- | --------------- | ------------------------------------------------------------------ |
-| Logic     | square          | Fades slowly and builds stable structures; dissolves doubts nearby |
-| Feeling   | circle          | Bonds easily with everything nearby                                |
-| Chaos     | four-point star | Multiplies fast, burns out fast                                    |
-| Instinct  | triangle        | Heavy and slow, pulls other ideas in                               |
-
-Archetypes differ by shape as well as colour, so they read without colour vision. A hybrid takes
-the shape of its dominant archetype and carries a small glyph on its ring for each one it holds.
+| Archetype | Behaviour                                                          |
+| --------- | ------------------------------------------------------------------ |
+| Logic     | Fades slowly and builds stable structures; dissolves doubts nearby |
+| Feeling   | Bonds easily with everything nearby                                |
+| Chaos     | Multiplies fast, burns out fast                                    |
+| Instinct  | Heavy and slow, pulls other ideas in                               |
 
 Each pair of archetypes has an affinity that draws them together or pushes them apart (see
 `AFFINITY` in `constants.ts`).
@@ -88,7 +85,8 @@ portrait.
 
 Clicks answer with ripples and a little shake, and a hybrid carrying more archetypes than any
 before it slows time for a beat. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with real
-bloom, keyboard play, music locked to a scale, PWA offline support and translations.
+bloom, a shape per archetype that also fixes colour blindness, keyboard play, music locked to a
+scale, PWA offline support and translations.
 
 What is implemented, how it was verified and what is knowingly missing is in the
 [project status](docs/STATUS.md); open work is in [TASKS.md](TASKS.md).
@@ -125,7 +123,7 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (43 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (40 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 

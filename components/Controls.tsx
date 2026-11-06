@@ -1,7 +1,6 @@
 import React from 'react';
 import { Archetype } from '../types';
 import { ARCHETYPES } from '../constants';
-import { ArchetypeGlyph } from './ArchetypeGlyph';
 
 interface ControlsProps {
   selectedArchetype: Archetype;
@@ -25,8 +24,14 @@ export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available
                     ${isSelected ? 'bg-white/10 scale-110 ring-1 ring-white/50' : 'hover:bg-white/5 opacity-60 hover:opacity-100'}
                 `}
           >
-            {/* The same silhouette ideas of this archetype have on the canvas */}
-            <ArchetypeGlyph type={type} size={20} className="mb-1" />
+            {/* Glowing Indicator */}
+            <div
+              className="w-4 h-4 rounded-full shadow-[0_0_10px_currentColor] mb-1 transition-all"
+              style={{
+                backgroundColor: `hsl(${info.hue}, 80%, 60%)`,
+                color: `hsl(${info.hue}, 80%, 60%)`,
+              }}
+            />
             <span className="text-[10px] font-bold uppercase tracking-widest">{info.label}</span>
 
             {/* Tooltip */}

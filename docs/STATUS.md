@@ -20,9 +20,7 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   transitions and objective bookkeeping.
 - **Free Mind**: the original sandbox with every archetype, no focus cost and no doubts.
 - **Presentation** (`utils/renderer.ts`): Canvas 2D drawing, trails that fade with `destination-out`,
-  synapses that sway per connection, a silhouette per archetype (`utils/shapes.ts`: square, circle,
-  four-point star, triangle) with archetype glyphs on hybrid rings, PNG portrait export via `toBlob`,
-  and `prefers-reduced-motion` respected (no trails, sway, particles or feel effects).
+  synapses that sway per connection, hybrid halo, PNG portrait export via `toBlob`, and `prefers-reduced-motion` respected (no trails, sway, particles or feel effects).
 - **Game feel** (`utils/feel.ts`): ripples on plant, stimulate, banish and denied actions;
   trauma-based screen shake; every hybrid birth sends a shockwave, and a blend wider than any before
   slows time to a quarter with a slight zoom that eases back over 0.9 s.
@@ -39,8 +37,8 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## How it is verified
 
-- `npm run check` — TypeScript, ESLint and 43 Vitest tests across seven files (game logic, stats,
-  focus, doubts, campaign, shapes, feel). Green locally and in CI.
+- `npm run check` — TypeScript, ESLint and 40 Vitest tests across six files (game logic, stats,
+  focus, doubts, campaign, feel). Green locally and in CI.
 - `npm run build` — static build in `dist/`, green locally and in CI.
 - `npm run e2e` — one Playwright smoke test: the menu renders, Free Mind starts, planting three ideas
   raises IDEAS to at least 3 and the page logs no errors.
@@ -57,7 +55,7 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## What is missing
 
-See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, keyboard play and
-settings,
-music locked to a scale, installable offline PWA, translations and a fixed simulation timestep. GPU
-cost of the renderer has not been measured on real hardware.
+See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a shape per
+archetype (also fixes colour blindness), keyboard play and settings, music locked to a scale,
+installable offline PWA, translations and a fixed simulation timestep. GPU cost of the renderer has
+not been measured on real hardware.

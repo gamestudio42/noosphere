@@ -9,6 +9,9 @@
 
 - WebGL renderer (PixiJS or custom shaders) with bloom, a layered neural background and thousands of
   particles (ROADMAP phase 2).
+- A shape per archetype as well as a colour, which also fixes colour blindness (ROADMAP phase 2).
+  Tried as square, circle, star and triangle and reverted: the mind reads better as circles for
+  now.
 - Keyboard play, pause menu, settings (volume, quality) and fullscreen (ROADMAP phase 4).
 - Every note locked to a scale and a pulse, plus an adaptive score (ROADMAP phase 3).
 - Installable offline PWA; self-host Space Grotesk so the build no longer needs Google Fonts.
@@ -24,7 +27,7 @@
 ## DONE
 
 - Campaign with five chapters, objectives and per-chapter saves; holds forgive dips under 5 s.
-- A silhouette per archetype; ripples, screen shake and hero moments for new hybrid blends.
+- Ripples, screen shake and hero moments for new hybrid blends.
 - Spatial grid and affinity table for physics; audio suspended when nothing is audible.
 - Focus as a resource, doubts as threats, hybrids with traits and affinities.
 - HUD, nine insights, extinction screen, PNG portrait export, reduced motion.
