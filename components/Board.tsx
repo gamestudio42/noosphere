@@ -11,7 +11,14 @@ import {
 } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { PHYSICS, FOCUS, DOUBT } from '../constants';
-import { playTone, playBlend, playCue, setMood, setAudioActive } from '../utils/audio';
+import {
+  playTone,
+  playBlend,
+  playCue,
+  setMood,
+  setAudioActive,
+  setAudioPaused,
+} from '../utils/audio';
 import { threatFor } from '../utils/music';
 import { canAfford, drainFocus, regenFocus } from '../utils/focus';
 import { doubtAt, maxDoubts, spawnDoubt, spawnInterval, updateDoubts } from '../utils/doubts';
@@ -39,6 +46,9 @@ interface BoardProps {
   onExtinct: (stats: SessionStats) => void;
   onRestore: (insights: Insight[]) => void;
   onDenied: () => void;
+  paused: boolean; // freezes the mind, its clocks and its sound
+  shake: boolean; // player setting: screen shake on or off
+  reducedEffects: boolean; // player setting: no trails, particles or feel effects
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
@@ -63,6 +73,9 @@ export const Board: React.FC<BoardProps> = ({
   onExtinct,
   onRestore,
   onDenied,
+  paused,
+  shake: shakeEnabled,
+  reducedEffects,
   canvasRef,
 }) => {
   // Game State Refs (Mutable for high-performance loop)
@@ -73,7 +86,16 @@ export const Board: React.FC<BoardProps> = ({
   const mouseRef = useRef<{ x: number; y: number } | null>(null);
   const lastAudioTimeRef = useRef<number>(0);
   const sizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
-  const reducedMotionRef = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // Reduced when the system asks for less motion or the player chose reduced effects
+  const systemReducedRef = useRef(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const reducedMotionRef = useRef(systemReducedRef.current || reducedEffects);
+  reducedMotionRef.current = systemReducedRef.current || reducedEffects;
+  const shakeRef = useRef(shakeEnabled);
+  shakeRef.current = shakeEnabled;
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  // When the current pause began, so mind age skips it
+  const pausedAtRef = useRef<number | null>(null);
   // Read by the animation loop, so the loop doesn't restart when the archetype changes
   const archetypeRef = useRef(selectedArchetype);
   archetypeRef.current = selectedArchetype;
@@ -156,7 +178,7 @@ export const Board: React.FC<BoardProps> = ({
         focus: focusRef.current,
         doubts: doubtsRef.current,
         session: {
-          duration: Date.now() - session.startedAt,
+          duration: (pausedAtRef.current ?? Date.now()) - session.startedAt,
           peakAlive: session.peakAlive,
           maxGeneration: session.maxGeneration,
           largestNetwork: session.largestNetwork,
@@ -227,7 +249,7 @@ export const Board: React.FC<BoardProps> = ({
     });
   };
   const shake = (amount: number) => {
-    if (!reducedMotionRef.current) addTrauma(feelRef.current, amount);
+    if (!reducedMotionRef.current && shakeRef.current) addTrauma(feelRef.current, amount);
   };
 
   const reportStats = () => {
@@ -296,6 +318,13 @@ export const Board: React.FC<BoardProps> = ({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Paused: keep the last frame on screen and let no time pass
+    if (pausedRef.current) {
+      lastFrameRef.current = null;
+      requestRef.current = requestAnimationFrame(animate);
+      return;
+    }
 
     // Work in CSS pixels; the canvas backing store is scaled by devicePixelRatio
     const { width, height } = sizeRef.current;
@@ -452,7 +481,7 @@ export const Board: React.FC<BoardProps> = ({
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const handleMotion = () => {
-      reducedMotionRef.current = motionQuery.matches;
+      systemReducedRef.current = motionQuery.matches;
     };
 
     window.addEventListener('resize', handleResize);
@@ -473,8 +502,26 @@ export const Board: React.FC<BoardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Pausing silences the mind; resuming moves its birth forward by the pause,
+  // so mind age and hold objectives only count time actually played
+  useEffect(() => {
+    if (paused) {
+      pausedAtRef.current = Date.now();
+      setAudioPaused(true);
+      return;
+    }
+    if (pausedAtRef.current !== null) {
+      sessionRef.current.startedAt += Date.now() - pausedAtRef.current;
+      pausedAtRef.current = null;
+    }
+    setAudioPaused(false);
+  }, [paused]);
+
+  useEffect(() => () => setAudioPaused(false), []);
+
   // Pointer events cover mouse, touch and pen without the touch→mouse double fire
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (pausedRef.current) return;
     const cx = e.clientX;
     const cy = e.clientY;
     // On touch there's no hover, so holding a finger down pays attention instead

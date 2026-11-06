@@ -28,6 +28,10 @@ const MASTER_VOLUME = 0.3;
 let muted = false;
 // Whether a mind is on screen; the menu has no sound
 let boardActive = false;
+// A paused mind is silent too
+let paused = false;
+// Player volume, 0..1, on top of MASTER_VOLUME
+let volume = 1;
 
 // Once started, the drone and the reverb keep the audio thread busy even when
 // silent, so the context is suspended whenever nothing can be heard.
@@ -36,6 +40,7 @@ let suspendTimer: ReturnType<typeof setTimeout> | undefined;
 
 const audible = () =>
   !muted &&
+  !paused &&
   boardActive &&
   (typeof document === 'undefined' || document.visibilityState !== 'hidden');
 
@@ -59,6 +64,19 @@ export const setAudioActive = (active: boolean) => {
   syncContext();
 };
 
+export const setAudioPaused = (value: boolean) => {
+  paused = value;
+  syncContext();
+};
+
+const masterLevel = () => (muted ? 0 : MASTER_VOLUME * volume);
+
+export const setVolume = (value: number) => {
+  volume = Math.max(0, Math.min(1, value));
+  if (audioCtx && masterGain)
+    masterGain.gain.setTargetAtTime(masterLevel(), audioCtx.currentTime, 0.05);
+};
+
 // Polyphony Management to prevent crashes
 let activeVoices = 0;
 const MAX_POLYPHONY = 20; // Maximum simultaneous sounds allowed
@@ -73,7 +91,7 @@ const getCtx = () => {
 
       // Master Volume
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = muted ? 0 : MASTER_VOLUME;
+      masterGain.gain.value = masterLevel();
       masterGain.connect(audioCtx.destination);
 
       // Initialize Shared FX
@@ -237,7 +255,7 @@ export const isMuted = () => muted;
 export const setMuted = (value: boolean) => {
   muted = value;
   if (audioCtx && masterGain) {
-    masterGain.gain.setTargetAtTime(muted ? 0 : MASTER_VOLUME, audioCtx.currentTime, 0.05);
+    masterGain.gain.setTargetAtTime(masterLevel(), audioCtx.currentTime, 0.05);
   }
   syncContext();
 };
