@@ -98,6 +98,7 @@ export const loadCampaign = (): CampaignState | null => {
       baseline: state.baseline ?? {},
       done: state.done ?? [],
       holdSince: {},
+      holdMissedAt: {},
     };
   } catch {
     return null;
