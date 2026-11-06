@@ -11,7 +11,8 @@ import {
 } from '../types';
 import { createNode, updatePhysics, ATTENTION_RADIUS } from '../utils/gameLogic';
 import { PHYSICS, FOCUS, DOUBT } from '../constants';
-import { playTone, playBlend, playCue, setAmbience, setAudioActive } from '../utils/audio';
+import { playTone, playBlend, playCue, setMood, setAudioActive } from '../utils/audio';
+import { threatFor } from '../utils/music';
 import { canAfford, drainFocus, regenFocus } from '../utils/focus';
 import { doubtAt, maxDoubts, spawnDoubt, spawnInterval, updateDoubts } from '../utils/doubts';
 import { drawFrame, BACKGROUND } from '../utils/renderer';
@@ -268,8 +269,14 @@ export const Board: React.FC<BoardProps> = ({
 
     const { onStats, onInsight, onExtinct } = callbacksRef.current;
     onStats(stats);
-    // The drone swells as the mind grows
-    setAmbience(nodes.length / PHYSICS.MAX_NODES);
+    // The score follows the mind: it swells as it grows, layers in with
+    // hybrids and turns tense while doubts feed on it
+    const latched = doubtsRef.current.filter((d) => d.target !== null).length;
+    setMood({
+      size: nodes.length / PHYSICS.MAX_NODES,
+      hybrids: hybridsAlive,
+      threat: threatFor(nodes.length, latched),
+    });
     for (const insight of INSIGHTS) {
       if (!session.unlocked.has(insight.id) && insight.test(stats)) {
         session.unlocked.add(insight.id);
@@ -278,7 +285,7 @@ export const Board: React.FC<BoardProps> = ({
     }
     if (nodes.length === 0) {
       session.extinct = true;
-      setAmbience(0);
+      setMood({ size: 0, hybrids: 0, threat: 0 });
       clearMind(mode);
       onExtinct(stats);
     }
@@ -362,7 +369,7 @@ export const Board: React.FC<BoardProps> = ({
           }
           // A new kind of idea: always celebrate it
           spawnParticles(event.x, event.y, `hsl(${event.node.hue}, 100%, 70%)`, 24);
-          playBlend(event.node.blend, 0.9);
+          playBlend(event.node.blend, 0.9, true);
           lastAudioTimeRef.current = now;
           return;
         }
@@ -370,11 +377,11 @@ export const Board: React.FC<BoardProps> = ({
         // On Synthesis/Birth Callback
         spawnParticles(event.x, event.y, '#fff', 8);
 
-        // Throttle audio: Only play if 80ms have passed since last tone
-        // This limits automatic audio to ~12 notes/sec max
+        // Throttle audio: Only play if 80ms have passed since last tone.
+        // Automatic notes also wait for the next sixteenth of the pulse.
         if (now - lastAudioTimeRef.current > 80) {
           const source = event.kind === 'split' ? event.node : event.a;
-          playTone(source.type, 0.4);
+          playTone(source.type, 0.4, true);
           lastAudioTimeRef.current = now;
         }
       },
@@ -459,7 +466,7 @@ export const Board: React.FC<BoardProps> = ({
       window.removeEventListener('resize', handleResize);
       motionQuery.removeEventListener('change', handleMotion);
       cancelAnimationFrame(requestRef.current);
-      setAmbience(0);
+      setMood({ size: 0, hybrids: 0, threat: 0 });
       setAudioActive(false);
     };
     // The loop reads everything through refs, so it is started exactly once

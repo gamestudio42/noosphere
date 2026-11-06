@@ -24,9 +24,13 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 - **Game feel** (`utils/feel.ts`): ripples on plant, stimulate, banish and denied actions;
   trauma-based screen shake; every hybrid birth sends a shockwave, and a blend wider than any before
   slows time to a quarter with a slight zoom that eases back over 0.9 s.
-- **Audio** (`utils/audio.ts`): WebAudio tones, chords and an ambient drone that swells with the
-  mind; the mute state is remembered locally, and the audio context is suspended on the menu, while
-  muted and in a hidden tab.
+- **Audio** (`utils/audio.ts`, `utils/music.ts`): every note in A minor pentatonic with a register
+  per archetype; bonds, splits and births wait for the next sixteenth of an 84 BPM pulse (at most
+  three per step) while the player's clicks sound at once. A lookahead scheduler plays an adaptive
+  score: the drone swells with the mind, a heartbeat joins past 15 ideas, an arpeggio once three
+  hybrids live, and under attack a minor-second pad swells and the heartbeat doubles. The mute state
+  is remembered locally, and the audio context is suspended on the menu, while muted and in a hidden
+  tab.
 - **Performance**: pair forces come from a uniform grid and a blend-mask affinity table, so physics
   for a full mind (150 ideas) costs about 0.5 ms per frame headless; look-alike synapses are stroked
   in one path per colour; the canvas pixel ratio is capped at 2.
@@ -37,8 +41,8 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## How it is verified
 
-- `npm run check` — TypeScript, ESLint and 40 Vitest tests across six files (game logic, stats,
-  focus, doubts, campaign, feel). Green locally and in CI.
+- `npm run check` — TypeScript, ESLint and 46 Vitest tests across seven files (game logic, stats,
+  focus, doubts, campaign, feel, music). Green locally and in CI.
 - `npm run build` — static build in `dist/`, green locally and in CI.
 - `npm run e2e` — one Playwright smoke test: the menu renders, Free Mind starts, planting three ideas
   raises IDEAS to at least 3 and the page logs no errors.
@@ -50,12 +54,14 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   per chapter, 2026-11-06). Chapters 1, 2 and 4 clear in under a minute, Doubt in 1.7 to 8.3 min on
   every seed, and Instinct on 5 of 8 seeds (median about 6 min). Not yet confirmed with human
   players.
+- Music: recorded every oscillator in Chromium while a mind grew to 56 ideas. 182 notes in 20 s, all
+  in key apart from the pitched heartbeat, every scheduled note exactly on the sixteenth grid,
+  automatic notes at most 186 ms late. Not yet judged by ear on speakers.
 - Played manually in Chromium at 1440×900: menu, a sandbox that grew to 50 ideas and 36 hybrids,
   campaign chapter 1 objectives, PNG export, mute and back to menu with the mind restored.
 
 ## What is missing
 
 See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a shape per
-archetype (also fixes colour blindness), keyboard play and settings, music locked to a scale,
-installable offline PWA, translations and a fixed simulation timestep. GPU cost of the renderer has
+archetype (also fixes colour blindness), keyboard play and settings, installable offline PWA, translations and a fixed simulation timestep. GPU cost of the renderer has
 not been measured on real hardware.
