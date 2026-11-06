@@ -355,9 +355,9 @@ export const Board: React.FC<BoardProps> = ({
       if (prev.width !== width || prev.height !== height) {
         const sx = width / prev.width;
         const sy = height / prev.height;
-        for (const n of nodesRef.current) {
-          n.pos.x *= sx;
-          n.pos.y *= sy;
+        for (const thing of [...nodesRef.current, ...doubtsRef.current]) {
+          thing.pos.x *= sx;
+          thing.pos.y *= sy;
         }
       }
       sizeRef.current = { width, height };
