@@ -15,7 +15,7 @@
 - Every note locked to a scale and a pulse, plus an adaptive score (ROADMAP phase 3).
 - Installable offline PWA; self-host Space Grotesk so the build no longer needs Google Fonts.
 - Portuguese strings and a locale switch (ROADMAP phase 4).
-- Fixed simulation timestep and spatial hashing for very large minds (ROADMAP phase 4).
+- Fixed simulation timestep (ROADMAP phase 4). Spatial hashing is done.
 
 ## BLOCKED
 

@@ -122,7 +122,7 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (34 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (36 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 
