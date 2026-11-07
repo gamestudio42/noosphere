@@ -4,7 +4,24 @@ import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  {
+    ignores: [
+      'dist',
+      'node_modules',
+      'desktop/dist',
+      'desktop/game',
+      'desktop/release',
+      'desktop/node_modules',
+    ],
+  },
+  {
+    files: ['desktop/preload.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: { require: 'readonly' } },
+  },
+  {
+    files: ['desktop/scripts/**/*.mjs'],
+    languageOptions: { globals: { console: 'readonly', process: 'readonly' } },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

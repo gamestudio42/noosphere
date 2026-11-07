@@ -99,6 +99,12 @@ Open **[gamestudio42.github.io/noosphere](https://gamestudio42.github.io/noosphe
 **BEGIN** to learn the mind chapter by chapter, or **FREE MIND** for the sandbox. The interface is
 in English; contextual hints explain each mechanic the first time it matters.
 
+On Linux it also installs as a desktop app that runs offline:
+
+```sh
+sudo snap install noosphere --edge
+```
+
 | Action            | How                                             |
 | ----------------- | ----------------------------------------------- |
 | Choose a mode     | **BEGIN** (campaign) or **FREE MIND** (sandbox) |
@@ -143,6 +149,12 @@ engineering standards of this workspace.
 
 Every push to `main` runs type check, lint, tests and build, then publishes `dist/` to the
 `gh-pages` branch. Pull requests get a preview under `/pr-preview/pr-<number>/`.
+
+`desktop/` is an Electron shell that serves the built game offline from `app://game/`. Run it with
+`npm install --prefix desktop` and `npm --prefix desktop start`. `snapcraft pack` builds the Linux
+snap from source with `snap/snapcraft.yaml`, and `.github/workflows/snap.yml` builds it and
+smoke-tests it on pull requests that touch the shell. The store banner is `snap/store/banner.jpg`:
+upload that file, still named `banner.jpg`. It is not inside the snap.
 
 ## Licence
 

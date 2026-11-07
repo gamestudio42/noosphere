@@ -1,0 +1,49 @@
+{
+  "name": "noosphere-desktop",
+  "version": "0.9.0",
+  "private": true,
+  "description": "Noosphere desktop shell (Electron) for the Snap",
+  "author": "Game Studio 42",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "npm --prefix .. run build && tsc -p tsconfig.json && node scripts/copy-game.mjs",
+    "start": "npm run build && electron .",
+    "smoke": "npm run build && electron . --smoke",
+    "dist:dir": "npm run build && electron-builder --linux dir --publish never"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "typescript": "~5.8.2"
+  },
+  "build": {
+    "appId": "io.github.noosphere.Noosphere",
+    "productName": "Noosphere",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "game/**",
+      "preload.cjs",
+      "package.json"
+    ],
+    "asar": true,
+    "linux": {
+      "target": [
+        "dir"
+      ],
+      "category": "Game",
+      "icon": "build/icon.png",
+      "synopsis": "An ecosystem of living ideas",
+      "description": "Plant ideas, pay attention to them and watch them bond, split and merge into hybrids.",
+      "executableName": "noosphere"
+    },
+    "executableName": "noosphere"
+  },
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://github.com/gamestudio42/noosphere"
+}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Noosphere
+Comment=An ecosystem of living ideas
+Exec=noosphere
+Icon=${SNAP}/meta/gui/icon.png
+Categories=Game;Simulation;
+StartupWMClass=Noosphere
+Terminal=false

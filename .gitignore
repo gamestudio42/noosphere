@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Desktop shell build output
+desktop/dist
+desktop/game
+desktop/release
+
 # Playwright
 test-results
 playwright-report

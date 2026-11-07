@@ -42,6 +42,10 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   `noosphere:settings:v1`. Keys 1–4 pick an archetype, M mutes, F toggles fullscreen.
 - **Insights** (`insights.ts`): nine milestones, shown as toasts during a session alongside objective
   toasts.
+- **Desktop snap** (`desktop/`, `snap/snapcraft.yaml`): an Electron shell serves the built game from
+  `app://game/` with a strict content security policy and no network access; Space Grotesk ships
+  with the build. `--smoke` boots the game hidden and prints `SMOKE {"ready":true,…}` once the menu
+  is up.
 
 ## How it is verified
 
@@ -63,6 +67,9 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 - Music: recorded every oscillator in Chromium while a mind grew to 56 ideas. 182 notes in 20 s, all
   in key apart from the pitched heartbeat, every scheduled note exactly on the sixteenth grid,
   automatic notes at most 186 ms late. Not yet judged by ear on speakers.
+- Desktop shell (2026-11-07): `npm --prefix desktop run smoke` and the electron-builder package in
+  `desktop/release/linux-unpacked` both boot to the menu with the bundled font loaded. The snap
+  itself is built and smoke-tested by `.github/workflows/snap.yml` in CI, not on the dev machine.
 - Played manually in Chromium at 1440×900: menu, a sandbox that grew to 50 ideas and 36 hybrids,
   campaign chapter 1 objectives, PNG export, mute and back to menu with the mind restored.
 
