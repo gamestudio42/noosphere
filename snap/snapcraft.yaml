@@ -1,0 +1,68 @@
+# Noosphere as a snap, built from source: installs the game and the desktop shell with npm, runs
+# `npm run dist:dir` in desktop/ and packs release/linux-unpacked. The Snap Store's Builds tab
+# builds and releases it to edge on every push to main; .github/workflows/snap.yml builds the same
+# file and smoke-tests it.
+#
+# The store banner is not part of the snap. snap/gui is only the desktop entry and the icon,
+# which snapcraft copies to meta/gui. Upload snap/store/banner.jpg in the listing media and
+# keep the name banner.jpg: 3840×1280, 3:1, under the 2 MB limit. snap/store/banner.png is
+# the same picture; upload the jpg.
+name: noosphere
+title: Noosphere
+base: core22
+adopt-info: noosphere
+icon: snap/gui/icon.png
+summary: An ecosystem of living ideas
+description: |
+  Plant ideas and watch them live. In Noosphere thoughts behave like
+  organisms: pay attention to an idea and it grows, splits and bonds with
+  its neighbours; forget it and it fades. When two different archetypes
+  touch they birth a hybrid that blends their colour, sound and behaviour.
+  Spend focus wisely, banish the doubts that drift in to drain your mind,
+  and play a five-chapter campaign or the open sandbox. Every bond and
+  birth plays a note, so a growing mind makes its own music.
+license: AGPL-3.0-or-later
+website: https://gamestudio42.github.io/noosphere/
+source-code: https://github.com/gamestudio42/noosphere
+issues: https://github.com/gamestudio42/noosphere/issues
+contact: talkgamestudio42@gmail.com
+grade: stable
+confinement: strict
+compression: lzo
+
+architectures:
+  - build-on: amd64
+
+apps:
+  noosphere:
+    # Chromium's own sandbox cannot run inside strict confinement; the snap sandbox replaces it.
+    command: app/noosphere --no-sandbox
+    desktop: meta/gui/noosphere.desktop
+    extensions: [gnome]
+    plugs:
+      - browser-support
+      - opengl
+      - audio-playback
+    environment:
+      TMPDIR: $XDG_RUNTIME_DIR
+
+parts:
+  noosphere:
+    plugin: nil
+    source: .
+    build-snaps:
+      - node/22/stable
+    stage-packages:
+      - libnspr4
+      - libnss3
+      - libxss1
+    override-pull: |
+      craftctl default
+      craftctl set version="$(sed -n 's/^  "version": "\(.*\)",$/\1/p' desktop/package.json)"
+    override-build: |
+      npm ci
+      cd desktop
+      npm ci
+      npm run dist:dir
+      mkdir -p "$CRAFT_PART_INSTALL/app"
+      cp -a release/linux-unpacked/. "$CRAFT_PART_INSTALL/app/"

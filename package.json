@@ -1,7 +1,7 @@
 {
   "name": "noosphere",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.9.0",
   "description": "An ecosystem of living ideas: a browser game where thoughts bond, split and fade.",
   "license": "AGPL-3.0-or-later",
   "repository": {

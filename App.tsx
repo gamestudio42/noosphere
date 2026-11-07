@@ -50,6 +50,13 @@ const App: React.FC = () => {
   // Title card for the chapter that just began; undefined hides it, null ends the campaign
   const [card, setCard] = useState<{ key: number; chapter: Chapter | null } | undefined>(undefined);
 
+  // The desktop snap loads ?smoke=1 and waits for this once the menu is up. It carries no game state.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('smoke') === '1') {
+      (window as unknown as { noosphereBoot?: { ready: boolean } }).noosphereBoot = { ready: true };
+    }
+  }, []);
+
   // Settings take effect at once and are remembered
   useEffect(() => {
     setMuted(settings.muted);
