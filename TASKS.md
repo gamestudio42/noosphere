@@ -12,7 +12,7 @@
 - A shape per archetype as well as a colour, which also fixes colour blindness (ROADMAP phase 2).
   Tried as square, circle, star and triangle and reverted: the mind reads better as circles for
   now.
-- Installable offline PWA; self-host Space Grotesk so the build no longer needs Google Fonts.
+- Installable offline PWA (Space Grotesk is already self-hosted).
 - Portuguese strings and a locale switch (ROADMAP phase 4).
 - Fixed simulation timestep (ROADMAP phase 4).
 - Playtest the campaign with people: the balance numbers come from a scripted player only.
