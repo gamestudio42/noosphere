@@ -8,20 +8,30 @@ repository.
 
 ## 1. Language
 
-- Write source code, identifiers, comments, and docstrings in English.
-- Write commit messages and technical pull-request descriptions in English.
+- Write the whole game project in English: code, identifiers, comments,
+  docstrings, commits, pull requests, and design documents.
+- A repository note that asks for another authoring language does not
+  override this rule.
+- The file without a suffix is the English original (`README.md`,
+  `docs/GDD.md`). Translations use the suffix `pt-BR`, `es`, `fr`, or
+  `de`. In the same change, update every translation that already exists.
+- Write new player-facing strings in English and, in the same change,
+  add `pt-BR`, `es`, `fr`, and `de` in the client i18n.
 - Respond to the user in their preferred language.
-- Keep English as the source language for player-facing strings.
-- Add other locales through the repository translation workflow.
-- Preserve existing translated strings.
+- Preserve existing translated strings. A stale translation is not a
+  finished change. If a locale could not be updated, name it in the
+  delivery report and say why.
 
 ## 2. Context Discovery
 
 Before modifying code or design:
 
 1. Identify the repository and active branch.
-2. Determine the engine and version (Godot, Defold, web client, or game server).
-3. Read the design pillars, core loop, and any game-design notes.
+2. Determine the engine and version (Godot, Defold, React or Phaser web client, or game server).
+3. Read the design pillars, core loop, and game-design notes. When they
+   exist, read `docs/GDD.md`, `docs/SPECIFICATION.md`,
+   `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md`,
+   `docs/decisions/`, and `docs/AGENTS.md`.
 4. Read applicable repository instructions and the active profile.
 5. Inspect the scene, system, or endpoint you will change.
 6. Understand the current tests, playtest notes, and tooling.
@@ -37,8 +47,10 @@ repository.
 
 Read applicable local files such as:
 
-- README.md
-- Design notes, pillars, and game-design documents in the tree
+- README.md and, when present, `README.pt-BR.md`, `README.es.md`,
+  `README.fr.md`, and `README.de.md`
+- Design notes, pillars, and game-design documents in the tree,
+  including `docs/AGENTS.md` when it exists
 - CONTRIBUTING.md
 - `project.godot`, `game.project`, `pnpm-workspace.yaml`, `package.json`, or the server entrypoint
 - AGENTS.md in applicable directories
@@ -62,6 +74,10 @@ then the GameStudio42 profile, then these global policies.
 - Prefer the engine's built-in systems before custom frameworks.
 - Do not put secrets in client builds or commits.
 - Preserve save data, published game builds, and player progress.
+- Do not change `LICENSE`, an SPDX notice, or a packaged `license`
+  field without authorization. Before adding third-party work, or
+  before choosing a license for a new project, read
+  `.gs42/standards/rules/06-licensing.md`.
 
 ## 5. Game Design
 
@@ -110,5 +126,7 @@ After completing a task, report:
 3. Files, scenes, or endpoints affected.
 4. Tests, builds, and play sessions executed, with results.
 5. What was not executed, and the remaining risk.
+6. Locales updated with the English original. Name any locale left
+   stale, and why.
 
 Distinguish clearly between design intent and verified work.
