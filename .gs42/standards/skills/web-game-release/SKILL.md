@@ -29,6 +29,8 @@ or any static host the repository documents.
    changed. Keep `game_id` stable.
 7. Deploy only to a disposable id unless the user asked to replace a
    published game.
+8. If `snap/snapcraft.yaml` exists, the snap packages this same build.
+   Do not treat it as a second game. Read `rules/web/snap.md`.
 
 ## Acceptance criteria
 

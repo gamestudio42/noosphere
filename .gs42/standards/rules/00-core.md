@@ -19,7 +19,9 @@ Apply instructions in this order:
 If instructions conflict, report the conflict. Prefer established
 upstream requirements over GameStudio42 defaults for technical
 conventions. GameStudio42 safety policies still apply when the
-repository is silent.
+repository is silent. English for the whole project does not yield to
+a repository note that asks for another authoring language. See
+`rules/01-language.md`.
 
 ## Principles
 

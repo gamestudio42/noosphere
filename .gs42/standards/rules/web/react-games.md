@@ -1,29 +1,36 @@
-# React games
+# Browser games
 
-The repository is a game that happens to render with React. Simulation
-state does not live in render state.
+The repository is a game that happens to render with React or Phaser.
+Simulation state does not live in render state or in a scene.
 
 A GameStudio42 game is a pnpm workspace. Clients live under `apps/`.
-The simulation lives in its own package (often `packages/simulation`
-or `packages/kernel`). Read the repository `AGENTS.md` to see which
+The simulation lives in its own package (often `packages/simulation`,
+`packages/sim`, `packages/kernel`, `packages/core`, or
+`packages/world`). Read the repository `AGENTS.md` to see which
 package that is. Do not copy paths from another title.
 
 ## Read first
 
 - `pnpm-workspace.yaml` and the root `package.json` scripts
-- The repository `AGENTS.md` and the simulation package it names
+- The repository `AGENTS.md`, and `docs/AGENTS.md` when it exists
+- The simulation package the repository names
 - The app under `apps/` you will change, and its bundler config
 - How the current build addresses assets (relative paths or a `base`)
 
 ## Rules
 
 - The simulation package is pure TypeScript: no DOM, no Node APIs, no
-  wall-clock time, and no `Math.random`. The repository lint is what
-  enforces the boundary. Do not weaken that lint to make a change pass.
+  wall-clock time, and no `Math.random`. That boundary holds when the
+  repository names the package, even if ESLint does not yet cover
+  every file. Do not weaken a lint rule that already enforces it.
 - React components never contain the game rules. They send commands
   and read state. Do not advance the rules inside render or in an
   effect that runs because the parent re-rendered.
+- A Phaser scene does not contain the game rules either. It sends
+  commands and reads state.
 - The renderer never mutates simulation state.
+- Numbers live in the content or balance package the repository
+  already uses. Do not add a magic gameplay number in the client.
 - Follow the component and folder layout already in the repository.
 - Player input goes through the project's input path. Do not bind a
   second global key listener beside the one the game already owns.
@@ -31,8 +38,9 @@ package that is. Do not copy paths from another title.
   bundle is public.
 - Dependencies: prefer what the workspace already has. Do not add a
   state library, physics library, or UI kit for one screen.
-- Player-facing strings stay in the project's i18n source. English is
-  the source language unless the repository says otherwise.
+- New player-facing strings are written in English. In the same
+  change, add `pt-BR`, `es`, `fr`, and `de` in the client i18n.
+  A stale translation is not a finished change.
 - Deterministic replays, seeds, or daily challenges use the project's
   existing RNG, in a deterministic order.
 
