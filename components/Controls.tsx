@@ -1,6 +1,7 @@
 import React from 'react';
 import { Archetype } from '../types';
 import { ARCHETYPES } from '../constants';
+import { useI18n } from '../i18n';
 
 interface ControlsProps {
   selectedArchetype: Archetype;
@@ -9,6 +10,7 @@ interface ControlsProps {
 }
 
 export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available, onSelect }) => {
+  const { t } = useI18n();
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-black/40 backdrop-blur-md p-4 rounded-full border border-white/10 shadow-2xl">
       {available.map((type) => {
@@ -32,11 +34,13 @@ export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available
                 color: `hsl(${info.hue}, 80%, 60%)`,
               }}
             />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{info.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">
+              {t.archetypes[type].label}
+            </span>
 
             {/* Tooltip */}
             <div className="absolute bottom-full mb-4 px-3 py-1 bg-black text-white text-xs whitespace-nowrap rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/20">
-              {info.description}
+              {t.archetypes[type].description}
             </div>
           </button>
         );

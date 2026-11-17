@@ -2,6 +2,7 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { CHAPTERS, CampaignState, currentChapter, objectiveProgress } from '../campaign';
 import { SessionStats } from '../types';
+import { chapterText, objectiveText, useI18n } from '../i18n';
 
 interface ObjectivesProps {
   campaign: CampaignState;
@@ -9,15 +10,16 @@ interface ObjectivesProps {
 }
 
 export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
+  const { t } = useI18n();
   const chapter = currentChapter(campaign);
 
   if (!chapter) {
     return (
       <div className="w-60 text-right">
         <p className="text-[10px] uppercase tracking-[0.3em] text-amber-200/80">
-          Campaign complete
+          {t.campaign.complete}
         </p>
-        <p className="mt-1 text-xs text-stone-400">The mind is whole. Keep it alive.</p>
+        <p className="mt-1 text-xs text-stone-400">{t.campaign.completeHint}</p>
       </div>
     );
   }
@@ -27,9 +29,11 @@ export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
   return (
     <div className="w-60 text-right">
       <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">
-        Chapter {campaign.chapter + 1}/{CHAPTERS.length}
+        {t.campaign.chapterOf(campaign.chapter + 1, CHAPTERS.length)}
       </p>
-      <p className="text-sm font-bold tracking-wide text-stone-200">{chapter.title}</p>
+      <p className="text-sm font-bold tracking-wide text-stone-200">
+        {chapterText(t, chapter.id).title}
+      </p>
       <ul className="mt-2 space-y-1">
         {chapter.objectives.map((objective) => {
           const done = campaign.done.includes(objective.id);
@@ -44,7 +48,7 @@ export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
               key={objective.id}
               className={`flex items-center justify-end gap-2 text-xs ${done ? 'text-stone-500 line-through' : 'text-stone-300'}`}
             >
-              <span>{objective.label}</span>
+              <span>{objectiveText(t, objective.id).label}</span>
               {done ? (
                 <Check size={12} className="text-cyan-300 shrink-0" />
               ) : (
@@ -56,7 +60,11 @@ export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
           );
         })}
       </ul>
-      {next && <p className="mt-3 text-[11px] leading-snug text-cyan-100/70">{next.hint}</p>}
+      {next && (
+        <p className="mt-3 text-[11px] leading-snug text-cyan-100/70">
+          {objectiveText(t, next.id).hint}
+        </p>
+      )}
     </div>
   );
 };

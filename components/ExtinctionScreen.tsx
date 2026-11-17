@@ -2,6 +2,7 @@ import React from 'react';
 import { Insight, SessionStats } from '../types';
 import { INSIGHTS } from '../insights';
 import { formatDuration } from '../utils/stats';
+import { insightText, useI18n } from '../i18n';
 
 interface ExtinctionScreenProps {
   stats: SessionStats;
@@ -14,22 +15,24 @@ export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({
   stats,
   insights,
   onRestart,
-  restartLabel = 'Plant a new mind',
+  restartLabel,
 }) => {
+  const { t } = useI18n();
+  const e = t.extinction;
   const rows: [string, React.ReactNode][] = [
-    ['Mind age', formatDuration(stats.duration)],
-    ['Most ideas at once', stats.peakAlive],
-    ['Deepest generation', stats.maxGeneration],
-    ['Largest web', stats.largestNetwork],
-    ['Bonds formed', stats.bonds],
-    ['Hybrids born', stats.hybridsBorn],
+    [e.mindAge, formatDuration(stats.duration)],
+    [e.mostIdeas, stats.peakAlive],
+    [e.deepest, stats.maxGeneration],
+    [e.largestWeb, stats.largestNetwork],
+    [e.bonds, stats.bonds],
+    [e.hybrids, stats.hybridsBorn],
   ];
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.8s_ease-out]">
       <div className="w-full max-w-md text-center">
-        <h2 className="text-4xl font-light tracking-tighter mb-2">The mind forgot.</h2>
-        <p className="text-stone-400 mb-8">Every idea faded. This is what it became:</p>
+        <h2 className="text-4xl font-light tracking-tighter mb-2">{e.title}</h2>
+        <p className="text-stone-400 mb-8">{e.subtitle}</p>
 
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-8 text-left">
           {rows.map(([label, value]) => (
@@ -41,18 +44,19 @@ export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({
         </dl>
 
         <p className="text-[11px] uppercase tracking-widest text-stone-500 mb-2">
-          Insights {insights.length}/{INSIGHTS.length}
+          {e.insights} {insights.length}/{INSIGHTS.length}
         </p>
         <div className="flex flex-wrap justify-center gap-2 mb-10">
           {INSIGHTS.map((insight) => {
             const got = insights.some((i) => i.id === insight.id);
+            const text = insightText(t, insight.id);
             return (
               <span
                 key={insight.id}
-                title={insight.description}
+                title={text.description}
                 className={`px-3 py-1 rounded-full text-[11px] border ${got ? 'border-amber-200/60 text-amber-100' : 'border-white/10 text-stone-600'}`}
               >
-                {got ? insight.title : '???'}
+                {got ? text.title : '???'}
               </span>
             );
           })}
@@ -63,7 +67,7 @@ export const ExtinctionScreen: React.FC<ExtinctionScreenProps> = ({
           autoFocus
           className="px-8 py-3 rounded-full border border-white/30 hover:border-white/70 hover:bg-white/5 transition-colors text-sm font-bold uppercase tracking-[0.3em]"
         >
-          {restartLabel}
+          {restartLabel ?? e.newMind}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { BrainCircuit } from 'lucide-react';
 import { CHAPTERS, CampaignState, currentChapter } from '../campaign';
 import { GameMode } from '../types';
 import { hasSavedMind } from '../utils/persistence';
+import { LOCALES, LOCALE_NAMES, chapterText, isLocale, useI18n } from '../i18n';
 
 interface MainMenuProps {
   campaign: CampaignState;
@@ -30,15 +31,17 @@ const MenuButton: React.FC<{
 );
 
 export const MainMenu: React.FC<MainMenuProps> = ({ campaign, onPlay, onResetCampaign }) => {
+  const { t, locale, setLocale } = useI18n();
+  const m = t.menu;
   const [confirmReset, setConfirmReset] = useState(false);
   const chapter = currentChapter(campaign);
   const started = campaign.chapter > 0 || campaign.done.length > 0 || hasSavedMind('campaign');
 
   const campaignDetail = !chapter
-    ? 'Complete. Return to the whole mind.'
+    ? m.campaignDone
     : started
-      ? `Chapter ${campaign.chapter + 1}/${CHAPTERS.length}: ${chapter.title}`
-      : 'Learn the mind, chapter by chapter.';
+      ? m.campaignAt(campaign.chapter + 1, CHAPTERS.length, chapterText(t, chapter.id).title)
+      : m.campaignNew;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
@@ -56,23 +59,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({ campaign, onPlay, onResetCam
           NOOSPHERE
         </h1>
         <p className="text-xl text-stone-400 font-light mb-12 tracking-wide">
-          An ecosystem of living ideas. <br />
-          Plant. Observe. Connect.
+          {m.tagline} <br />
+          {m.motto}
         </p>
 
         <div className="flex flex-col gap-3">
           <MenuButton
             primary
             onClick={() => onPlay('campaign')}
-            label={started ? 'Continue' : 'Begin'}
+            label={started ? m.continue : m.begin}
             detail={campaignDetail}
           />
           <MenuButton
             onClick={() => onPlay('free')}
-            label="Free Mind"
-            detail={
-              hasSavedMind('free') ? 'Return to your sandbox.' : 'No focus, no doubts. Just play.'
-            }
+            label={m.free}
+            detail={hasSavedMind('free') ? m.freeSaved : m.freeNew}
           />
         </div>
 
@@ -86,9 +87,24 @@ export const MainMenu: React.FC<MainMenuProps> = ({ campaign, onPlay, onResetCam
             onBlur={() => setConfirmReset(false)}
             className={`mt-8 text-[11px] uppercase tracking-widest transition-colors ${confirmReset ? 'text-rose-300' : 'text-stone-600 hover:text-stone-400'}`}
           >
-            {confirmReset ? 'Click again to erase campaign progress' : 'Restart campaign'}
+            {confirmReset ? m.restartConfirm : m.restart}
           </button>
         )}
+
+        <label className="mt-10 flex items-center gap-2 text-[11px] uppercase tracking-widest text-stone-500">
+          {m.language}
+          <select
+            value={locale}
+            onChange={(e) => isLocale(e.target.value) && setLocale(e.target.value)}
+            className="bg-transparent border border-white/10 rounded-full px-3 py-1 text-stone-300 normal-case tracking-normal"
+          >
+            {LOCALES.map((l) => (
+              <option key={l} value={l} className="bg-black">
+                {LOCALE_NAMES[l]}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     </div>
   );
