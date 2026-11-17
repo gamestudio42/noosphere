@@ -53,12 +53,22 @@ mind is saved in the browser, so you can close the tab and come back.
 <table>
 <tr>
 <td align="center" width="50%" valign="top">
-<img src="docs/screenshots/campaign.jpg" alt="Chapter 1 of the campaign: five objectives that unlock archetypes and mechanics one at a time" width="460"><br>
+<img src="docs/screenshots/campaign.jpg" alt="Chapter 5, Instinct: a doubt latched onto a web that has joined all four archetypes, with focus spent" width="460"><br>
 The campaign teaches the game one idea at a time.
 </td>
 <td align="center" width="50%" valign="top">
 <img src="docs/screenshots/menu.jpg" alt="Title screen with BEGIN for the campaign and FREE MIND for the sandbox" width="460"><br>
 Two ways in: the campaign, or the sandbox with no focus cost.
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="top">
+<img src="docs/screenshots/birth.jpg" alt="A sandbox mind of 122 ideas with shockwave rings spreading from new hybrids and the Lineage insight toast" width="460"><br>
+Every hybrid birth sends out a shockwave.
+</td>
+<td align="center" width="50%" valign="top">
+<img src="docs/screenshots/doubt.jpg" alt="Chapter 3, Doubt: a web of Logic ideas and Logic-Chaos hybrids, with a dark doubt creeping in at its right edge" width="460"><br>
+Doubts creep in from the edges and drain what they touch.
 </td>
 </tr>
 </table>
