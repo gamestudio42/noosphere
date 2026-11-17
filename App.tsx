@@ -23,6 +23,7 @@ import {
 import { exportCanvas } from './utils/renderer';
 import { clearCampaign, clearMind, loadCampaign, saveCampaign } from './utils/persistence';
 import { playCue, setMuted, setVolume } from './utils/audio';
+import { setPalette } from './utils/palette';
 import { ARCHETYPE_ORDER } from './constants';
 import { Archetype, GameMode, GameRules, Insight, SessionStats } from './types';
 import {
@@ -83,6 +84,7 @@ const App: React.FC = () => {
   useEffect(() => {
     setMuted(settings.muted);
     setVolume(settings.volume);
+    setPalette(settings.palette);
     saveSettings(settings);
   }, [settings]);
 

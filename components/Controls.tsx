@@ -1,6 +1,6 @@
 import React from 'react';
 import { Archetype } from '../types';
-import { ARCHETYPES } from '../constants';
+import { archetypeHue } from '../utils/palette';
 import { useI18n } from '../i18n';
 
 interface ControlsProps {
@@ -14,7 +14,6 @@ export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-black/40 backdrop-blur-md p-4 rounded-full border border-white/10 shadow-2xl">
       {available.map((type) => {
-        const info = ARCHETYPES[type];
         const isSelected = selectedArchetype === type;
 
         return (
@@ -30,8 +29,8 @@ export const Controls: React.FC<ControlsProps> = ({ selectedArchetype, available
             <div
               className="w-4 h-4 rounded-full shadow-[0_0_10px_currentColor] mb-1 transition-all"
               style={{
-                backgroundColor: `hsl(${info.hue}, 80%, 60%)`,
-                color: `hsl(${info.hue}, 80%, 60%)`,
+                backgroundColor: `hsl(${archetypeHue(type)}, 80%, 60%)`,
+                color: `hsl(${archetypeHue(type)}, 80%, 60%)`,
               }}
             />
             <span className="text-[10px] font-bold uppercase tracking-widest">

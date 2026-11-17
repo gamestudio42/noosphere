@@ -1,5 +1,5 @@
 import React from 'react';
-import { ARCHETYPES } from '../constants';
+import { archetypeHue } from '../utils/palette';
 import { chapterText, useI18n } from '../i18n';
 import { CHAPTERS, Chapter } from '../campaign';
 
@@ -36,8 +36,8 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onDone }) => 
                 key={type}
                 className="px-3 py-1 rounded-full text-[11px] uppercase tracking-widest border"
                 style={{
-                  borderColor: `hsla(${ARCHETYPES[type].hue}, 80%, 60%, 0.6)`,
-                  color: `hsl(${ARCHETYPES[type].hue}, 80%, 75%)`,
+                  borderColor: `hsla(${archetypeHue(type)}, 80%, 60%, 0.6)`,
+                  color: `hsl(${archetypeHue(type)}, 80%, 75%)`,
                 }}
               >
                 {t.campaign.unlocked(t.archetypes[type].label)}
