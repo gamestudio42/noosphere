@@ -30,7 +30,8 @@ cohesive, and a game that holds attention, not just a toy.
 
 - [ ] WebGL renderer (PixiJS or custom shaders) with bloom, layered neural background and thousands of particles.
 - [x] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
-- [ ] A shape per archetype as well as a colour (also fixes colour blindness).
+- [ ] A shape per archetype as well as a colour. Tried and reverted; colour blindness is covered
+      by the opt-in colour-blind palette instead.
 - [x] Screen shake and stronger click feedback.
 
 ## Phase 3: audio
@@ -41,7 +42,8 @@ cohesive, and a game that holds attention, not just a toy.
 ## Phase 4: product
 
 - [x] Pause menu and settings (volume, quality, accessibility), keyboard shortcuts, fullscreen.
-- [ ] Installable offline PWA, real touch testing, Portuguese and English.
+- [x] Installable offline PWA; English, Portuguese, Spanish, French and German.
+- [ ] Real touch testing on phones.
 - [ ] More insights, cross-session stats, e2e tests.
 - [ ] Fixed simulation timestep.
 - [x] Spatial hashing for pair forces.
