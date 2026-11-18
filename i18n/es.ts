@@ -166,6 +166,8 @@ export const es: Catalog = {
     effectsHint: 'Desactivado: sin estelas, partículas, ondas ni cámara lenta',
     palette: 'Paleta para daltonismo',
     paletteHint: 'Colores de arquetipo que se distinguen con cualquier tipo de visión del color',
+    glow: 'Brillo (WebGL)',
+    glowHint: 'Bloom y un fondo vivo. Desactivado: el aspecto clásico',
     fullscreen: 'Pantalla completa',
     fullscreenHint: 'Ocupar toda la pantalla',
     language: 'Idioma',

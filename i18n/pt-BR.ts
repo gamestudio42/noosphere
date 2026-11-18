@@ -160,6 +160,8 @@ export const ptBR: Catalog = {
     effectsHint: 'Desligado: sem rastros, partículas, ondas nem câmera lenta',
     palette: 'Paleta para daltonismo',
     paletteHint: 'Cores de arquétipo que se distinguem em todo tipo de visão de cores',
+    glow: 'Brilho (WebGL)',
+    glowHint: 'Bloom e fundo vivo. Desligado: o visual clássico',
     fullscreen: 'Tela cheia',
     fullscreenHint: 'Ocupar a tela inteira',
     language: 'Idioma',

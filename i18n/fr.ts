@@ -163,6 +163,8 @@ export const fr: Catalog = {
     effectsHint: 'Désactivé : ni traînées, ni particules, ni ondes, ni ralenti',
     palette: 'Palette pour daltoniens',
     paletteHint: 'Des couleurs d’archétype qui restent distinctes pour toute vision des couleurs',
+    glow: 'Lueur (WebGL)',
+    glowHint: 'Halo lumineux et fond vivant. Désactivé : l’aspect classique',
     fullscreen: 'Plein écran',
     fullscreenHint: 'Occuper tout l’écran',
     language: 'Langue',

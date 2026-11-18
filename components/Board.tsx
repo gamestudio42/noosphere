@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   IdeaNode,
   Particle,
@@ -37,6 +37,7 @@ import {
   zoom,
 } from '../utils/feel';
 import { displayHue } from '../utils/palette';
+import { createGlow, GlowRenderer } from '../utils/glow';
 
 interface BoardProps {
   mode: GameMode; // which saved mind to resume and write
@@ -50,6 +51,7 @@ interface BoardProps {
   paused: boolean; // freezes the mind, its clocks and its sound
   shake: boolean; // player setting: screen shake on or off
   reducedEffects: boolean; // player setting: no trails, particles or feel effects
+  glow: boolean; // player setting: WebGL bloom and living background over the 2D scene
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
@@ -77,6 +79,7 @@ export const Board: React.FC<BoardProps> = ({
   paused,
   shake: shakeEnabled,
   reducedEffects,
+  glow,
   canvasRef,
 }) => {
   // Game State Refs (Mutable for high-performance loop)
@@ -113,6 +116,11 @@ export const Board: React.FC<BoardProps> = ({
   const feelRef = useRef(newFeel());
   const heroBlendRef = useRef(1);
   const transformRef = useRef('');
+  // Shake and zoom move this wrapper, so the 2D scene and the glow move together
+  const stageRef = useRef<HTMLDivElement>(null);
+  const glowCanvasRef = useRef<HTMLCanvasElement>(null);
+  const glowRef = useRef<GlowRenderer | null>(null);
+  const [glowActive, setGlowActive] = useState(false);
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
 
@@ -434,6 +442,11 @@ export const Board: React.FC<BoardProps> = ({
       reducedMotion: reducedMotionRef.current,
       ripples: feel.ripples,
     });
+    // The glow takes the finished 2D frame; the background stands still when motion is reduced
+    glowRef.current?.render(canvas, {
+      time: reducedMotionRef.current ? 0 : time,
+      life: nodesRef.current.length / PHYSICS.MAX_NODES,
+    });
 
     // Shake and zoom move the canvas element itself: cheap, and the trails
     // already painted move with it instead of smearing
@@ -444,10 +457,11 @@ export const Board: React.FC<BoardProps> = ({
       offset.x === 0 && offset.y === 0 && scale === 1
         ? ''
         : `translate(${offset.x.toFixed(2)}px, ${offset.y.toFixed(2)}px) scale(${scale.toFixed(4)})`;
-    if (transform !== transformRef.current) {
+    const stage = stageRef.current;
+    if (stage && transform !== transformRef.current) {
       transformRef.current = transform;
-      canvas.style.transform = transform;
-      canvas.style.transformOrigin = origin;
+      stage.style.transform = transform;
+      stage.style.transformOrigin = origin;
     }
     requestRef.current = requestAnimationFrame(animate);
   };
@@ -478,6 +492,7 @@ export const Board: React.FC<BoardProps> = ({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       canvas.getContext('2d')?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      glowRef.current?.resize(canvas.width, canvas.height);
     };
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -598,6 +613,32 @@ export const Board: React.FC<BoardProps> = ({
     mouseRef.current = { x: e.clientX, y: e.clientY };
   };
 
+  // The glow is optional: without WebGL2, or if the context is lost, the 2D canvas shows as before
+  useEffect(() => {
+    const glowCanvas = glowCanvasRef.current;
+    const canvas = canvasRef.current;
+    if (!glow || !glowCanvas || !canvas) return;
+    const renderer = createGlow(glowCanvas);
+    if (!renderer) return;
+    renderer.resize(canvas.width, canvas.height);
+    glowRef.current = renderer;
+    setGlowActive(true);
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      glowRef.current = null;
+      setGlowActive(false);
+    };
+    glowCanvas.addEventListener('webglcontextlost', onLost);
+    return () => {
+      glowCanvas.removeEventListener('webglcontextlost', onLost);
+      glowRef.current = null;
+      setGlowActive(false);
+      renderer.dispose();
+    };
+    // canvasRef is a stable ref object
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [glow]);
+
   const handlePointerEnd = (e: React.PointerEvent) => {
     if (e.type === 'pointerleave' || e.pointerType === 'touch') {
       mouseRef.current = null;
@@ -606,15 +647,24 @@ export const Board: React.FC<BoardProps> = ({
 
   return (
     <div className="fixed inset-0 cursor-crosshair" style={{ background: BACKGROUND }}>
-      <canvas
-        ref={canvasRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onPointerLeave={handlePointerEnd}
-        className="block"
-      />
+      <div ref={stageRef} className="absolute inset-0">
+        <canvas
+          ref={canvasRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          onPointerLeave={handlePointerEnd}
+          className="block"
+        />
+        {/* Drawn over the 2D canvas, which still takes the pointer */}
+        <canvas
+          ref={glowCanvasRef}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ display: glow && glowActive ? 'block' : 'none' }}
+        />
+      </div>
     </div>
   );
 };

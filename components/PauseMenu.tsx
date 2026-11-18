@@ -123,6 +123,12 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
             checked={settings.palette === 'colourblind'}
             onChange={(on) => set('palette', on ? 'colourblind' : 'default')}
           />
+          <Toggle
+            label={p.glow}
+            hint={p.glowHint}
+            checked={settings.glow}
+            onChange={(on) => set('glow', on)}
+          />
           {canFullscreen && (
             <Toggle
               label={p.fullscreen}

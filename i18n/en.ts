@@ -152,6 +152,8 @@ export const en = {
     effectsHint: 'Off: no trails, particles, ripples or slow motion',
     palette: 'Colour-blind palette',
     paletteHint: 'Archetype colours that stay apart for every kind of colour vision',
+    glow: 'Glow (WebGL)',
+    glowHint: 'Bloom and a living background. Off: the classic flat look',
     fullscreen: 'Fullscreen',
     fullscreenHint: 'Fill the whole screen',
     language: 'Language',
