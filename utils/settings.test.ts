@@ -11,6 +11,7 @@ describe('settings', () => {
         shake: null,
         effects: 'ultra',
         palette: 'neon',
+        glow: 'yes',
       }),
     ).toEqual(DEFAULT_SETTINGS);
   });
@@ -23,6 +24,7 @@ describe('settings', () => {
         shake: false,
         effects: 'reduced',
         palette: 'colourblind',
+        glow: true,
       }),
     ).toEqual({
       volume: 1,
@@ -30,6 +32,7 @@ describe('settings', () => {
       shake: false,
       effects: 'reduced',
       palette: 'colourblind',
+      glow: true,
     });
     expect(sanitizeSettings({ volume: -1 }).volume).toBe(0);
   });

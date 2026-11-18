@@ -12,6 +12,7 @@ export interface Settings {
   shake: boolean; // screen shake on hits, births and denied actions
   effects: Effects; // reduced: no trails, particles, ripples or slow motion
   palette: PaletteName; // colourblind: archetype hues that stay apart for every colour vision
+  glow: boolean; // WebGL bloom and living background (falls back to the 2D canvas)
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS: Settings = {
   shake: true,
   effects: 'full',
   palette: 'default',
+  glow: false,
 };
 
 const KEY = 'noosphere:settings:v1';
@@ -41,10 +43,27 @@ export const sanitizeSettings = (raw: unknown): Settings => {
     effects: r.effects === 'reduced' || r.effects === 'full' ? r.effects : DEFAULT_SETTINGS.effects,
     palette:
       r.palette === 'default' || r.palette === 'colourblind' ? r.palette : DEFAULT_SETTINGS.palette,
+    glow: typeof r.glow === 'boolean' ? r.glow : DEFAULT_SETTINGS.glow,
   };
 };
 
+// ?fx=glow or ?fx=flat switches the WebGL glow and remembers the choice
+const fxFromQuery = (): boolean | null => {
+  try {
+    const fx = new URLSearchParams(window.location.search).get('fx');
+    return fx === 'glow' ? true : fx === 'flat' ? false : null;
+  } catch {
+    return null;
+  }
+};
+
 export const loadSettings = (): Settings => {
+  const loaded = loadStoredSettings();
+  const fx = fxFromQuery();
+  return fx === null ? loaded : { ...loaded, glow: fx };
+};
+
+const loadStoredSettings = (): Settings => {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return sanitizeSettings(JSON.parse(raw));

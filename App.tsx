@@ -256,6 +256,7 @@ const App: React.FC = () => {
           paused={paused}
           shake={settings.shake}
           reducedEffects={settings.effects === 'reduced'}
+          glow={settings.glow}
           canvasRef={canvasRef}
         />
 

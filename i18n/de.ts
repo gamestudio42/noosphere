@@ -163,6 +163,8 @@ export const de: Catalog = {
     effectsHint: 'Aus: keine Spuren, Partikel, Wellen oder Zeitlupe',
     palette: 'Farbenblind-Palette',
     paletteHint: 'Archetypfarben, die bei jeder Art des Farbsehens unterscheidbar bleiben',
+    glow: 'Leuchten (WebGL)',
+    glowHint: 'Bloom und lebendiger Hintergrund. Aus: der klassische Look',
     fullscreen: 'Vollbild',
     fullscreenHint: 'Den ganzen Bildschirm füllen',
     language: 'Sprache',
