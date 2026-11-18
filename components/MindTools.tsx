@@ -1,5 +1,6 @@
 import React from 'react';
 import { Camera, Home, Pause, Volume2, VolumeX } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface MindToolsProps {
   muted: boolean;
@@ -19,37 +20,29 @@ export const MindTools: React.FC<MindToolsProps> = ({
   onHome,
   onExport,
 }) => {
+  const { t } = useI18n();
+  const k = t.tools;
   return (
     <div className="fixed bottom-8 right-6 z-50 flex flex-col gap-2">
-      <button
-        className={buttonClass}
-        onClick={onPause}
-        title="Pause, settings and keyboard shortcuts (Esc)"
-        aria-label="Pause"
-      >
+      <button className={buttonClass} onClick={onPause} title={k.pauseHint} aria-label={k.pause}>
         <Pause size={18} />
       </button>
-      <button
-        className={buttonClass}
-        onClick={onHome}
-        title="Back to menu (your mind is saved)"
-        aria-label="Back to menu"
-      >
+      <button className={buttonClass} onClick={onHome} title={k.homeHint} aria-label={k.home}>
         <Home size={18} />
       </button>
       <button
         className={buttonClass}
         onClick={onToggleMute}
-        title={muted ? 'Unmute (M)' : 'Mute (M)'}
-        aria-label={muted ? 'Unmute' : 'Mute'}
+        title={`${muted ? k.unmute : k.mute} (M)`}
+        aria-label={muted ? k.unmute : k.mute}
       >
         {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
       </button>
       <button
         className={buttonClass}
         onClick={onExport}
-        title="Save a portrait of this mind"
-        aria-label="Save image"
+        title={k.saveImageHint}
+        aria-label={k.saveImage}
       >
         <Camera size={18} />
       </button>

@@ -18,3 +18,13 @@ root.render(
     <App />
   </React.StrictMode>,
 );
+
+// Offline play for the web build. Not in development (it would cache stale
+// modules) and not in the desktop shell, which serves the game from app://.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // No offline cache this visit; the game still plays online
+    });
+  });
+}

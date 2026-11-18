@@ -2,6 +2,7 @@ import React from 'react';
 import { SessionStats } from '../types';
 import { INSIGHTS } from '../insights';
 import { formatDuration } from '../utils/stats';
+import { useI18n } from '../i18n';
 
 interface HudProps {
   stats: SessionStats | null;
@@ -17,23 +18,25 @@ const Stat: React.FC<{ label: string; value: React.ReactNode }> = ({ label, valu
 );
 
 export const Hud: React.FC<HudProps> = ({ stats, unlockedCount, objectives }) => {
+  const { t } = useI18n();
+  const h = t.hud;
   return (
     <>
       <div className="absolute top-6 left-6 z-40 pointer-events-none">
         <h1 className="text-2xl font-bold tracking-tight opacity-50">NOOSPHERE</h1>
         {stats && (
           <div className="mt-3 w-44 space-y-0.5 text-[11px] tracking-wider uppercase">
-            <Stat label="Ideas" value={stats.alive} />
-            <Stat label="Hybrids" value={stats.hybridsAlive} />
-            <Stat label="Generation" value={stats.maxGeneration} />
-            <Stat label="Largest web" value={stats.network} />
+            <Stat label={h.ideas} value={stats.alive} />
+            <Stat label={h.hybrids} value={stats.hybridsAlive} />
+            <Stat label={h.generation} value={stats.maxGeneration} />
+            <Stat label={h.largestWeb} value={stats.network} />
             {stats.doubtsAlive > 0 && (
               <Stat
-                label="Doubts"
+                label={h.doubts}
                 value={<span className="text-violet-300">{stats.doubtsAlive}</span>}
               />
             )}
-            <Stat label="Mind age" value={formatDuration(stats.duration)} />
+            <Stat label={h.mindAge} value={formatDuration(stats.duration)} />
           </div>
         )}
       </div>
@@ -41,15 +44,15 @@ export const Hud: React.FC<HudProps> = ({ stats, unlockedCount, objectives }) =>
       <div className="absolute top-6 right-6 z-40 pointer-events-none text-right">
         {objectives ?? (
           <p className="text-xs text-stone-500 max-w-[200px] ml-auto">
-            Click to plant an idea.
-            <br />
-            Hover to pay attention.
-            <br />
-            Ideas die when forgotten.
+            {h.howTo.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
           </p>
         )}
         <p className="mt-3 text-[11px] uppercase tracking-widest text-stone-400">
-          Insights {unlockedCount}/{INSIGHTS.length}
+          {h.insights} {unlockedCount}/{INSIGHTS.length}
         </p>
       </div>
     </>

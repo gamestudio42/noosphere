@@ -2,6 +2,7 @@ import { Doubt, IdeaNode, Particle, Vector2 } from '../types';
 import { ATTENTION_RADIUS } from './gameLogic';
 import { doubtRadius } from './doubts';
 import { Ripple } from './feel';
+import { displayHue } from './palette';
 
 export const BACKGROUND = '#050505';
 
@@ -87,6 +88,8 @@ export const drawFrame = (
       // Each bond is listed by both ends: draw it once, from the smaller id
       if (node.id > target.id && target.connections.includes(node.id)) continue;
 
+      const hueA = displayHue(node);
+      const hueB = displayHue(target);
       const energyA = Math.max(0, Math.min(1, node.energy / 100));
       const energyB = Math.max(0, Math.min(1, target.energy / 100));
 
@@ -101,13 +104,10 @@ export const drawFrame = (
       const midX = (node.pos.x + target.pos.x) / 2 - (dy / len) * sway;
       const midY = (node.pos.y + target.pos.y) / 2 + (dx / len) * sway;
 
-      if (
-        hueGap(node.hue, target.hue) > GRADIENT_HUE ||
-        Math.abs(energyA - energyB) > GRADIENT_ALPHA
-      ) {
+      if (hueGap(hueA, hueB) > GRADIENT_HUE || Math.abs(energyA - energyB) > GRADIENT_ALPHA) {
         const grad = ctx.createLinearGradient(node.pos.x, node.pos.y, target.pos.x, target.pos.y);
-        grad.addColorStop(0, `hsla(${node.hue}, 80%, 50%, ${energyA})`);
-        grad.addColorStop(1, `hsla(${target.hue}, 80%, 50%, ${energyB})`);
+        grad.addColorStop(0, `hsla(${hueA}, 80%, 50%, ${energyA})`);
+        grad.addColorStop(1, `hsla(${hueB}, 80%, 50%, ${energyB})`);
         ctx.strokeStyle = grad;
         ctx.beginPath();
         ctx.moveTo(node.pos.x, node.pos.y);
@@ -117,8 +117,8 @@ export const drawFrame = (
       }
 
       // Midway round the colour wheel (signed, so 350 and 10 meet at 0)
-      const turn = ((((target.hue - node.hue) % 360) + 540) % 360) - 180;
-      const hue = Math.round((node.hue + turn / 2) / HUE_STEP) * HUE_STEP;
+      const turn = ((((hueB - hueA) % 360) + 540) % 360) - 180;
+      const hue = Math.round((hueA + turn / 2) / HUE_STEP) * HUE_STEP;
       const alpha = Math.round(((energyA + energyB) / 2) * ALPHA_STEPS) / ALPHA_STEPS;
       if (alpha === 0) continue;
       const key = `hsla(${hue}, 80%, 50%, ${alpha})`;
@@ -141,7 +141,8 @@ export const drawFrame = (
   // Draw Nodes
   nodes.forEach((node) => {
     const glow = Math.max(0, Math.min(1, node.energy / 100));
-    const color = `hsla(${node.hue}, 100%, 60%, ${glow})`;
+    const hue = displayHue(node);
+    const color = `hsla(${hue}, 100%, 60%, ${glow})`;
 
     ctx.beginPath();
     ctx.arc(node.pos.x, node.pos.y, node.radius * (0.8 + glow * 0.5), 0, Math.PI * 2);
@@ -152,7 +153,7 @@ export const drawFrame = (
     if (node.blend.length > 1) {
       ctx.beginPath();
       ctx.arc(node.pos.x, node.pos.y, node.radius * 1.6, 0, Math.PI * 2);
-      ctx.strokeStyle = `hsla(${node.hue}, 100%, 75%, ${0.3 + glow * 0.5})`;
+      ctx.strokeStyle = `hsla(${hue}, 100%, 75%, ${0.3 + glow * 0.5})`;
       ctx.stroke();
     }
 

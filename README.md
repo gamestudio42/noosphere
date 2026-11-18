@@ -96,9 +96,9 @@ portrait.
 Clicks answer with ripples and a little shake, and a hybrid carrying more archetypes than any
 before it slows time for a beat. The mind plays music: every note is in A minor pentatonic, bonds
 and births fall on a slow pulse, and a score of heartbeat, arpeggio and tension follows how big, how
-mixed and how threatened the mind is. Still open in the [roadmap](ROADMAP.md): a WebGL renderer with
-real bloom, a shape per archetype that also fixes colour blindness, PWA offline
-support and translations.
+mixed and how threatened the mind is. It speaks English, Portuguese, Spanish, French and German,
+offers a colour-blind palette, and installs from the browser to play offline. Still open in the
+[roadmap](ROADMAP.md): a WebGL renderer with real bloom and a fixed simulation timestep.
 
 What is implemented, how it was verified and what is knowingly missing is in the
 [project status](docs/STATUS.md); open work is in [TASKS.md](TASKS.md).
@@ -106,8 +106,11 @@ What is implemented, how it was verified and what is knowingly missing is in the
 ## Play
 
 Open **[gamestudio42.github.io/noosphere](https://gamestudio42.github.io/noosphere/)**. Choose
-**BEGIN** to learn the mind chapter by chapter, or **FREE MIND** for the sandbox. The interface is
-in English; contextual hints explain each mechanic the first time it matters.
+**BEGIN** to learn the mind chapter by chapter, or **FREE MIND** for the sandbox. The game follows
+your browser's language among English, Português, Español, Français and Deutsch; change it on the
+menu or in the pause menu, or open it with `?lang=pt-BR` (or `en`, `es`, `fr`, `de`). Contextual
+hints explain each mechanic the first time it matters. Your browser can install it as an app, and
+after the first visit it plays offline.
 
 On Linux it also installs as a desktop app that runs offline:
 
@@ -130,7 +133,8 @@ sudo snap install noosphere --edge
 | Save a portrait   | the image button (PNG of the current mind)      |
 
 Pausing freezes the mind, its clock and its sound, and leaving the tab pauses too. The pause menu
-holds the settings: volume, sound, screen shake, full or reduced effects and fullscreen. The view
+holds the settings: volume, sound, screen shake, full or reduced effects, a colour-blind palette,
+fullscreen and language. The view
 also respects `prefers-reduced-motion`: no trails, sway, particles, ripples, shake or slow motion
 when it is set.
 
@@ -145,7 +149,7 @@ npm run dev        # http://localhost:3000
 
 | Command           | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `npm run check`   | Type check, lint and the Vitest suite (48 tests)              |
+| `npm run check`   | Type check, lint and the Vitest suite (59 tests)              |
 | `npm run build`   | Static build in `dist/`, relative paths, runs from any folder |
 | `npm run preview` | Serves the built site locally                                 |
 

@@ -11,9 +11,19 @@ import { FocusBar } from './components/FocusBar';
 import { MainMenu } from './components/MainMenu';
 import { PauseMenu } from './components/PauseMenu';
 import { Settings, loadSettings, saveSettings } from './utils/settings';
+import {
+  CATALOGS,
+  I18nContext,
+  Locale,
+  bootLocale,
+  insightText,
+  objectiveText,
+  saveLocale,
+} from './i18n';
 import { exportCanvas } from './utils/renderer';
 import { clearCampaign, clearMind, loadCampaign, saveCampaign } from './utils/persistence';
 import { playCue, setMuted, setVolume } from './utils/audio';
+import { setPalette } from './utils/palette';
 import { ARCHETYPE_ORDER } from './constants';
 import { Archetype, GameMode, GameRules, Insight, SessionStats } from './types';
 import {
@@ -43,6 +53,19 @@ const App: React.FC = () => {
   const [paused, setPaused] = useState(false);
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [fullscreen, setFullscreen] = useState(false);
+  const [locale, setLocaleState] = useState<Locale>(bootLocale);
+  const t = CATALOGS[locale];
+  // Toasts are worded when they appear; the ref gives the stats handler the current language
+  const tRef = useRef(t);
+  tRef.current = t;
+  const setLocale = useCallback((next: Locale) => {
+    setLocaleState(next);
+    saveLocale(next);
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+  const i18n = { locale, t, setLocale };
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [campaign, setCampaign] = useState<CampaignState>(() => loadCampaign() ?? newCampaign());
   // Stats arrive from the loop; the ref lets the handler see the latest campaign
@@ -61,6 +84,7 @@ const App: React.FC = () => {
   useEffect(() => {
     setMuted(settings.muted);
     setVolume(settings.volume);
+    setPalette(settings.palette);
     saveSettings(settings);
   }, [settings]);
 
@@ -102,7 +126,11 @@ const App: React.FC = () => {
     if (update.state === campaignRef.current) return;
     updateCampaign(update.state);
     for (const objective of update.completed) {
-      pushToast({ kind: 'objective', title: 'Objective complete', description: objective.label });
+      pushToast({
+        kind: 'objective',
+        title: tRef.current.campaign.objectiveComplete,
+        description: objectiveText(tRef.current, objective.id).label,
+      });
     }
     if (update.chapterCompleted) {
       playCue('chapter');
@@ -116,7 +144,8 @@ const App: React.FC = () => {
   const handleInsight = useCallback(
     (insight: Insight) => {
       setUnlocked((prev) => [...prev, insight]);
-      pushToast({ kind: 'insight', title: insight.title, description: insight.description });
+      const text = insightText(tRef.current, insight.id);
+      pushToast({ kind: 'insight', title: text.title, description: text.description });
     },
     [pushToast],
   );
@@ -195,78 +224,84 @@ const App: React.FC = () => {
   }, [playing]);
 
   if (!mode) {
-    return <MainMenu campaign={campaign} onPlay={play} onResetCampaign={resetCampaign} />;
+    return (
+      <I18nContext.Provider value={i18n}>
+        <MainMenu campaign={campaign} onPlay={play} onResetCampaign={resetCampaign} />
+      </I18nContext.Provider>
+    );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-white overflow-hidden">
-      {/* UI Overlay */}
-      <Hud
-        stats={stats}
-        unlockedCount={unlocked.length}
-        objectives={inCampaign ? <Objectives campaign={campaign} stats={stats} /> : undefined}
-      />
-      <InsightToasts toasts={toasts} />
+    <I18nContext.Provider value={i18n}>
+      <div className="relative min-h-screen bg-[#050505] text-white overflow-hidden">
+        {/* UI Overlay */}
+        <Hud
+          stats={stats}
+          unlockedCount={unlocked.length}
+          objectives={inCampaign ? <Objectives campaign={campaign} stats={stats} /> : undefined}
+        />
+        <InsightToasts toasts={toasts} />
 
-      {/* Main Simulation */}
-      <Board
-        key={`${mode}-${sessionKey}`}
-        mode={mode}
-        selectedArchetype={archetype}
-        rules={rules}
-        onStats={handleStats}
-        onInsight={handleInsight}
-        onExtinct={setExtinct}
-        onRestore={setUnlocked}
-        onDenied={() => setDeniedAt(Date.now())}
-        paused={paused}
-        shake={settings.shake}
-        reducedEffects={settings.effects === 'reduced'}
-        canvasRef={canvasRef}
-      />
+        {/* Main Simulation */}
+        <Board
+          key={`${mode}-${sessionKey}`}
+          mode={mode}
+          selectedArchetype={archetype}
+          rules={rules}
+          onStats={handleStats}
+          onInsight={handleInsight}
+          onExtinct={setExtinct}
+          onRestore={setUnlocked}
+          onDenied={() => setDeniedAt(Date.now())}
+          paused={paused}
+          shake={settings.shake}
+          reducedEffects={settings.effects === 'reduced'}
+          canvasRef={canvasRef}
+        />
 
-      {rules.focus && stats && <FocusBar focus={stats.focus} deniedAt={deniedAt} />}
+        {rules.focus && stats && <FocusBar focus={stats.focus} deniedAt={deniedAt} />}
 
-      {card && (
-        <ChapterCard key={card.key} chapter={card.chapter} onDone={() => setCard(undefined)} />
-      )}
+        {card && (
+          <ChapterCard key={card.key} chapter={card.chapter} onDone={() => setCard(undefined)} />
+        )}
 
-      {/* Controls */}
-      <Controls
-        selectedArchetype={archetype}
-        available={available}
-        onSelect={setSelectedArchetype}
-      />
+        {/* Controls */}
+        <Controls
+          selectedArchetype={archetype}
+          available={available}
+          onSelect={setSelectedArchetype}
+        />
 
-      <MindTools
-        muted={settings.muted}
-        onToggleMute={() => setSettings((s) => ({ ...s, muted: !s.muted }))}
-        onPause={() => setPaused(true)}
-        onHome={goHome}
-        onExport={() => canvasRef.current && exportCanvas(canvasRef.current)}
-      />
-
-      {paused && !extinct && (
-        <PauseMenu
-          settings={settings}
-          onChange={setSettings}
-          onResume={() => setPaused(false)}
+        <MindTools
+          muted={settings.muted}
+          onToggleMute={() => setSettings((s) => ({ ...s, muted: !s.muted }))}
+          onPause={() => setPaused(true)}
           onHome={goHome}
-          onFullscreen={toggleFullscreen}
-          fullscreen={fullscreen}
-          canFullscreen={canFullscreen}
+          onExport={() => canvasRef.current && exportCanvas(canvasRef.current)}
         />
-      )}
 
-      {extinct && (
-        <ExtinctionScreen
-          stats={extinct}
-          insights={unlocked}
-          onRestart={restart}
-          restartLabel={inCampaign ? 'Retry this chapter' : 'Plant a new mind'}
-        />
-      )}
-    </div>
+        {paused && !extinct && (
+          <PauseMenu
+            settings={settings}
+            onChange={setSettings}
+            onResume={() => setPaused(false)}
+            onHome={goHome}
+            onFullscreen={toggleFullscreen}
+            fullscreen={fullscreen}
+            canFullscreen={canFullscreen}
+          />
+        )}
+
+        {extinct && (
+          <ExtinctionScreen
+            stats={extinct}
+            insights={unlocked}
+            onRestart={restart}
+            restartLabel={inCampaign ? t.extinction.retryChapter : t.extinction.newMind}
+          />
+        )}
+      </div>
+    </I18nContext.Provider>
   );
 };
 

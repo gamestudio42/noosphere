@@ -3,8 +3,6 @@ import { ARCHETYPE_ORDER } from './constants';
 
 export interface Objective {
   id: string;
-  label: string;
-  hint: string; // shown while this is the next objective
   stat: keyof SessionStats;
   target: number;
   cumulative?: boolean; // counts only what happened during this chapter
@@ -13,41 +11,32 @@ export interface Objective {
 
 export interface Chapter {
   id: string;
-  title: string;
-  intro: string;
   unlocks: Archetype[];
   doubts?: boolean; // doubts arrive from this chapter on
   objectives: Objective[];
 }
 
-// Each chapter introduces one idea and only asks for what it just taught
+// Each chapter introduces one idea and only asks for what it just taught.
+// Titles, intros, labels and hints live in i18n/, keyed by these ids.
 export const CHAPTERS: Chapter[] = [
   {
     id: 'awakening',
-    title: 'Awakening',
-    intro: 'A single thought flickers in the dark. Tend it.',
     unlocks: ['RATIONAL'],
     objectives: [
       {
         id: 'plant',
-        label: 'Plant 3 ideas',
-        hint: 'Click empty space to plant an idea. Planting spends focus.',
         stat: 'planted',
         target: 3,
         cumulative: true,
       },
       {
         id: 'split',
-        label: 'Help an idea divide',
-        hint: 'Hover over an idea to feed it with attention until it splits.',
         stat: 'splits',
         target: 1,
         cumulative: true,
       },
       {
         id: 'bond',
-        label: 'Let two ideas bond',
-        hint: 'Ideas that drift close together bond on their own.',
         stat: 'bonds',
         target: 1,
         cumulative: true,
@@ -56,22 +45,16 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 'chaos',
-    title: 'Chaos',
-    intro: 'Something restless stirs.',
     unlocks: ['CREATIVE'],
     objectives: [
       {
         id: 'hybrid',
-        label: 'Birth a hybrid',
-        hint: 'Plant Chaos beside Logic. When different ideas bond, something new is born.',
         stat: 'hybridsBorn',
         target: 1,
         cumulative: true,
       },
       {
         id: 'grow',
-        label: 'Keep 15 ideas alive',
-        hint: 'Chaos multiplies fast and burns out fast. Logic endures.',
         stat: 'alive',
         target: 15,
       },
@@ -79,23 +62,17 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 'doubt',
-    title: 'Doubt',
-    intro: 'Not every thought is welcome.',
     unlocks: [],
     doubts: true,
     objectives: [
       {
         id: 'banish',
-        label: 'Banish 3 doubts',
-        hint: 'Click a doubt to banish it. Logic ideas slowly see through them.',
         stat: 'doubtsBanished',
         target: 3,
         cumulative: true,
       },
       {
         id: 'hold',
-        label: 'Keep 20 ideas alive for 60s',
-        hint: 'Well connected ideas resist doubt. Living hybrids restore focus.',
         stat: 'alive',
         target: 20,
         holdSeconds: 60,
@@ -104,21 +81,15 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 'feeling',
-    title: 'Feeling',
-    intro: 'Warmth floods the mind.',
     unlocks: ['EMOTIONAL'],
     objectives: [
       {
         id: 'trinity',
-        label: 'Carry 3 archetypes in one idea',
-        hint: 'Hybrids bond too. Feeling bonds with almost anything, but clashes with Logic.',
         stat: 'maxBlend',
         target: 3,
       },
       {
         id: 'web',
-        label: 'Join 20 ideas in one web',
-        hint: 'Feeling reaches far. Keep a single network growing.',
         stat: 'network',
         target: 20,
       },
@@ -126,21 +97,15 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: 'instinct',
-    title: 'Instinct',
-    intro: 'Something ancient wakes beneath it all.',
     unlocks: ['PRIMAL'],
     objectives: [
       {
         id: 'whole',
-        label: 'Unite all 4 archetypes in one idea',
-        hint: 'Instinct pulls ideas together and loves Feeling.',
         stat: 'maxBlend',
         target: 4,
       },
       {
         id: 'endure',
-        label: 'Keep 35 ideas alive for 60s',
-        hint: 'The whole mind, defended. This is the last trial.',
         stat: 'alive',
         target: 35,
         holdSeconds: 60,

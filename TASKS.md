@@ -9,11 +9,7 @@
 
 - WebGL renderer (PixiJS or custom shaders) with bloom, a layered neural background and thousands of
   particles (ROADMAP phase 2).
-- A shape per archetype as well as a colour, which also fixes colour blindness (ROADMAP phase 2).
-  Tried as square, circle, star and triangle and reverted: the mind reads better as circles for
-  now.
-- Installable offline PWA (Space Grotesk is already self-hosted).
-- Portuguese strings and a locale switch (ROADMAP phase 4).
+- Native-speaker review of the Spanish, French and German catalogs in `i18n/`.
 - Fixed simulation timestep (ROADMAP phase 4).
 - Playtest the campaign with people: the balance numbers come from a scripted player only.
 
@@ -29,6 +25,7 @@
 - Spatial grid and affinity table for physics; audio suspended when nothing is audible.
 - Music in A minor pentatonic on an 84 BPM pulse, with an adaptive score.
 - Pause menu with settings, keyboard play and fullscreen.
+- Five languages, an opt-in colour-blind palette and an installable offline PWA; strict TypeScript.
 - Focus as a resource, doubts as threats, hybrids with traits and affinities.
 - HUD, nine insights, extinction screen, PNG portrait export, reduced motion.
 - Static build published to GitHub Pages by CI, with pull request previews.

@@ -1,6 +1,7 @@
 import { IdeaNode, Vector2, Archetype, Particle, Traits, SimEvent } from '../types';
 import { PHYSICS, ARCHETYPES, AFFINITY, ARCHETYPE_ORDER } from '../constants';
 import { random } from './random';
+import { PALETTES, blendHueIn } from './palette';
 
 // Radius (px) within which the cursor "pays attention" to a node
 export const ATTENTION_RADIUS = 30;
@@ -33,16 +34,7 @@ export const blendTraits = (blend: Archetype[]): Traits => {
 };
 
 // Circular mean so e.g. red (10) + magenta (320) blends through 345, not 165
-export const blendHue = (blend: Archetype[]): number => {
-  let x = 0;
-  let y = 0;
-  for (const t of blend) {
-    const rad = (ARCHETYPES[t].hue * Math.PI) / 180;
-    x += Math.cos(rad);
-    y += Math.sin(rad);
-  }
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-};
+export const blendHue = (blend: Archetype[]): number => blendHueIn(blend, PALETTES.default);
 
 export const affinityBetween = (a: Archetype[], b: Archetype[]): number => {
   let sum = 0;

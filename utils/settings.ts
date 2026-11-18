@@ -2,6 +2,8 @@
 // (private mode, blocked site data), so every access is guarded and the
 // defaults apply when it fails.
 
+import type { PaletteName } from './palette';
+
 export type Effects = 'full' | 'reduced';
 
 export interface Settings {
@@ -9,6 +11,7 @@ export interface Settings {
   muted: boolean;
   shake: boolean; // screen shake on hits, births and denied actions
   effects: Effects; // reduced: no trails, particles, ripples or slow motion
+  palette: PaletteName; // colourblind: archetype hues that stay apart for every colour vision
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -16,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   muted: false,
   shake: true,
   effects: 'full',
+  palette: 'default',
 };
 
 const KEY = 'noosphere:settings:v1';
@@ -35,6 +39,8 @@ export const sanitizeSettings = (raw: unknown): Settings => {
     muted: typeof r.muted === 'boolean' ? r.muted : DEFAULT_SETTINGS.muted,
     shake: typeof r.shake === 'boolean' ? r.shake : DEFAULT_SETTINGS.shake,
     effects: r.effects === 'reduced' || r.effects === 'full' ? r.effects : DEFAULT_SETTINGS.effects,
+    palette:
+      r.palette === 'default' || r.palette === 'colourblind' ? r.palette : DEFAULT_SETTINGS.palette,
   };
 };
 

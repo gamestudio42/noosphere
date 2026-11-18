@@ -36,6 +36,7 @@ import {
   timeScale,
   zoom,
 } from '../utils/feel';
+import { displayHue } from '../utils/palette';
 
 interface BoardProps {
   mode: GameMode; // which saved mind to resume and write
@@ -387,17 +388,17 @@ export const Board: React.FC<BoardProps> = ({
           sessionRef.current.hybridsBorn++;
           // Every birth sends out a shockwave; a blend wider than any before
           // (the first hybrid, the first trio, the whole mind) stops time
-          ripple(event.x, event.y, event.node.hue, 8, 120, 750, 2.5);
+          ripple(event.x, event.y, displayHue(event.node), 8, 120, 750, 2.5);
           if (event.node.blend.length > heroBlendRef.current && !reducedMotionRef.current) {
             heroBlendRef.current = event.node.blend.length;
             startHero(feelRef.current, event.x, event.y, performance.now());
-            ripple(event.x, event.y, event.node.hue, 20, 320, 1100, 3);
+            ripple(event.x, event.y, displayHue(event.node), 20, 320, 1100, 3);
             shake(0.45);
           } else {
             shake(0.18);
           }
           // A new kind of idea: always celebrate it
-          spawnParticles(event.x, event.y, `hsl(${event.node.hue}, 100%, 70%)`, 24);
+          spawnParticles(event.x, event.y, `hsl(${displayHue(event.node)}, 100%, 70%)`, 24);
           playBlend(event.node.blend, 0.9, true);
           lastAudioTimeRef.current = now;
           return;
@@ -572,11 +573,11 @@ export const Board: React.FC<BoardProps> = ({
       if (spend(FOCUS.STIMULATE)) {
         // Stimulate: a boost, not an instant split
         node.energy = Math.min(100, node.energy + 35);
-        ripple(node.pos.x, node.pos.y, node.hue, node.radius, node.radius * 4, 400);
+        ripple(node.pos.x, node.pos.y, displayHue(node), node.radius, node.radius * 4, 400);
         shake(0.06);
         node.vel.x += (Math.random() - 0.5) * 5;
         node.vel.y += (Math.random() - 0.5) * 5;
-        spawnParticles(node.pos.x, node.pos.y, `hsl(${node.hue}, 100%, 50%)`, 10);
+        spawnParticles(node.pos.x, node.pos.y, `hsl(${displayHue(node)}, 100%, 50%)`, 10);
         playBlend(node.blend, 1.0);
       }
     } else if (spend(FOCUS.PLANT)) {
@@ -585,7 +586,7 @@ export const Board: React.FC<BoardProps> = ({
       newNode.energy = 70;
       nodesRef.current.push(newNode);
       sessionRef.current.planted++;
-      ripple(cx, cy, newNode.hue, 2, 40, 500);
+      ripple(cx, cy, displayHue(newNode), 2, 40, 500);
       spawnParticles(cx, cy, '#fff', 15);
       playTone(archetype, 0.8);
     }

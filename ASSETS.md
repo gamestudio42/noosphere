@@ -4,7 +4,7 @@
 | ---------------------------------------------- | ------------------------------------------------------------------ | --------------- | ----------------- |
 | Ideas, hybrids, doubts, synapses, trails, glow | Drawn procedurally in `utils/renderer.ts` and `utils/gameLogic.ts` | Original        | AGPL-3.0-or-later |
 | Sounds: notes, cues, drone and adaptive score  | Synthesized at runtime with WebAudio in `utils/audio.ts`           | Original        | AGPL-3.0-or-later |
-| Emblem and favicon                             | `public/icon.svg`                                                  | Original        | AGPL-3.0-or-later |
+| Emblem, favicon and app icons                  | `public/icon.svg`; PNG icons in `public/` rendered from it         | Original        | AGPL-3.0-or-later |
 | "Play in the browser" button                   | `docs/screenshots/play.svg`                                        | Original        | AGPL-3.0-or-later |
 | Documentation screenshots                      | `docs/screenshots/*.jpg`, captured from this build with Playwright | Original        | AGPL-3.0-or-later |
 | Typeface Space Grotesk                         | Bundled from `@fontsource/space-grotesk` (latin 300, 400, 700)     | Florian Karsten | SIL OFL 1.1       |

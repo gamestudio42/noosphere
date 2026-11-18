@@ -84,7 +84,5 @@ export interface GameRules {
 
 export interface Insight {
   id: string;
-  title: string;
-  description: string;
   test: (stats: SessionStats) => boolean;
 }

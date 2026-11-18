@@ -42,6 +42,17 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   `noosphere:settings:v1`. Keys 1–4 pick an archetype, M mutes, F toggles fullscreen.
 - **Insights** (`insights.ts`): nine milestones, shown as toasts during a session alongside objective
   toasts.
+- **Languages** (`i18n/`): English, Brazilian Portuguese, Spanish, French and German. Game data
+  keeps ids and every word on screen comes from a catalog typed after the English one. The language
+  comes from `?lang=`, then the saved choice, then the browser, then English; the menu and the pause
+  menu switch it.
+- **Colour-blind palette** (`utils/palette.ts`): an opt-in set of four hues chosen for the largest
+  worst-case distance under simulated protanopia, deuteranopia and tritanopia (ΔE about 54, against
+  about 21 for the default palette). Ideas keep their hue in the simulation; drawing maps it.
+- **Offline PWA** (`pwa/serviceWorker.ts`, `public/manifest.webmanifest`): the build writes `sw.js`
+  with the exact file list; install precaches it, navigations fall back to the cached page and
+  assets are served cache-first. Caches are named by scope, since the origin hosts other games and
+  previews. Registered only in production over http(s).
 - **Desktop snap** (`desktop/`, `snap/snapcraft.yaml`): an Electron shell serves the built game from
   `app://game/` with a strict content security policy and no network access; Space Grotesk ships
   with the build. `--smoke` boots the game hidden and prints `SMOKE {"ready":true,…}` once the menu
@@ -49,13 +60,15 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## How it is verified
 
-- `npm run check` — TypeScript, ESLint and 48 Vitest tests across eight files (game logic, stats,
-  focus, doubts, campaign, feel, music, settings). Green locally and in CI.
+- `npm run check` — TypeScript, ESLint and 59 Vitest tests across eleven files (game logic, stats,
+  focus, doubts, campaign, feel, music, settings, palette, i18n, service worker). The type check
+  runs in `strict` mode with the React types installed. Green locally and in CI.
 - `npm run build` — static build in `dist/`, green locally and in CI.
-- `npm run e2e` — two Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
+- `npm run e2e` — three Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
   ideas raises IDEAS to at least 3 and the page logs no errors. Pause: number keys pick an
   archetype, Esc opens the pause menu with Resume focused, mind age stands still while paused, a
-  setting is saved, and Esc resumes.
+  setting is saved, and Esc resumes. Offline: the worker takes control, the network goes down, a
+  reload still plays into Free Mind with the bundled font, and the manifest has icons.
 - `npm run format:check` — Prettier with the studio settings (`singleQuote`, `printWidth` 100,
   `trailingComma: all`).
 - CI (`.github/workflows/pages.yml`) runs type check, lint, tests, build and e2e on every push and
@@ -75,6 +88,6 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## What is missing
 
-See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a shape per
-archetype (also fixes colour blindness), installable offline PWA, translations and a fixed
-simulation timestep. GPU cost of the renderer has not been measured on real hardware.
+See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a fixed
+simulation timestep, touch tested on real phones, and translations reviewed by native speakers
+(the four non-English catalogs were written without one). GPU cost of the renderer has not been measured on real hardware.
