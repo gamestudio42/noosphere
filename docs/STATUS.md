@@ -21,6 +21,10 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 - **Free Mind**: the original sandbox with every archetype, no focus cost and no doubts.
 - **Presentation** (`utils/renderer.ts`): Canvas 2D drawing, trails that fade with `destination-out`,
   synapses that sway per connection, hybrid halo, PNG portrait export via `toBlob`, and `prefers-reduced-motion` respected (no trails, sway, particles or feel effects).
+- **WebGL glow** (`utils/glow.ts`, opt-in): a WebGL2 layer composites the finished 2D frame over a
+  dim, drifting neural background and adds bloom from a five-level dual-filter blur. Off by default
+  while it is reviewed: Glow (WebGL) in the pause menu, or `?fx=glow`. Without WebGL2, or after a
+  lost context, the 2D canvas shows as before.
 - **Game feel** (`utils/feel.ts`): ripples on plant, stimulate, banish and denied actions;
   trauma-based screen shake; every hybrid birth sends a shockwave, and a blend wider than any before
   slows time to a quarter with a slight zoom that eases back over 0.9 s.
@@ -64,11 +68,12 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   focus, doubts, campaign, feel, music, settings, palette, i18n, service worker). The type check
   runs in `strict` mode with the React types installed. Green locally and in CI.
 - `npm run build` — static build in `dist/`, green locally and in CI.
-- `npm run e2e` — three Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
+- `npm run e2e` — four Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
   ideas raises IDEAS to at least 3 and the page logs no errors. Pause: number keys pick an
   archetype, Esc opens the pause menu with Resume focused, mind age stands still while paused, a
   setting is saved, and Esc resumes. Offline: the worker takes control, the network goes down, a
-  reload still plays into Free Mind with the bundled font, and the manifest has icons.
+  reload still plays into Free Mind with the bundled font, and the manifest has icons. Glow:
+  `?fx=glow` shows the WebGL layer exactly when WebGL2 exists, saves the setting, logs no errors.
 - `npm run format:check` — Prettier with the studio settings (`singleQuote`, `printWidth` 100,
   `trailingComma: all`).
 - CI (`.github/workflows/pages.yml`) runs type check, lint, tests, build and e2e on every push and
@@ -88,6 +93,8 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## What is missing
 
-See [ROADMAP.md](../ROADMAP.md). The honest short list: WebGL renderer with bloom, a fixed
+See [ROADMAP.md](../ROADMAP.md). The honest short list: the WebGL glow judged and made the default
+(its cost was only measured in software rendering, about 130 ms a frame in headless SwiftShader
+against 17 ms flat, so it needs a GPU measurement first), a fixed
 simulation timestep, touch tested on real phones, and translations reviewed by native speakers
 (the four non-English catalogs were written without one). GPU cost of the renderer has not been measured on real hardware.
