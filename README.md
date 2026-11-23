@@ -33,17 +33,17 @@
 
 ## Watch a mind grow
 
-1. **Plant.** Click empty space to plant an idea of the selected archetype. Planting spends focus,
-   and focus is the only thing standing between you and an empty screen.
-2. **Pay attention.** Hover an idea (or hold a finger on it) to feed it energy. Attention is what
+1. **Plant.** Click or tap empty space to plant an idea of the selected archetype. Planting spends
+   focus, and focus is the only thing standing between you and an empty screen.
+2. **Pay attention.** Hover an idea, or hold a finger on it, to feed it energy. Attention is what
    keeps it alive; an idea nobody tends to fades and dies.
 3. **Spend the focus.** Focus regenerates over time and faster with living hybrids, but planting,
    stimulating and feeding all draw from the same bar. Denied actions shake it.
 4. **Let them bond.** Neighbouring ideas grow synapses. When two different archetypes touch, they
    birth a **hybrid** that blends their colour, sound and behaviour — and speeds up regeneration.
 5. **Hold the mind together.** Doubts drift in from the edges and drain the ideas they latch onto.
-   Logic ideas dissolve them, well-connected webs resist, and clicking a doubt banishes it for
-   focus. When every idea dies, the mind is forgotten and you plant a new one.
+   Logic ideas dissolve them, well-connected webs resist, and clicking or tapping a doubt banishes
+   it for focus. When every idea dies, the mind is forgotten and you plant a new one.
 
 The simulation runs on a seeded random source, so a mind grows the same way from the same seed. The
 mind is saved in the browser, so you can close the tab and come back.
@@ -119,19 +119,20 @@ On Linux it also installs as a desktop app that runs offline:
 sudo snap install noosphere --edge
 ```
 
-| Action            | How                                             |
-| ----------------- | ----------------------------------------------- |
-| Choose a mode     | **BEGIN** (campaign) or **FREE MIND** (sandbox) |
-| Plant an idea     | click empty space (spends focus)                |
-| Feed an idea      | hover it, or hold a finger on it                |
-| Stimulate an idea | click it for a burst of energy                  |
-| Banish a doubt    | click it                                        |
-| Change archetype  | the archetype buttons, or keys **1**–**4**      |
-| Pause             | **Esc** or **P**, or the pause button           |
-| Back to menu      | the home button, or the pause menu              |
-| Mute / unmute     | **M**, or the speaker button                    |
-| Fullscreen        | **F**, or the pause menu                        |
-| Save a portrait   | the image button (PNG of the current mind)      |
+| Action            | How                                                |
+| ----------------- | -------------------------------------------------- |
+| Choose a mode     | **BEGIN** (campaign) or **FREE MIND** (sandbox)    |
+| Plant an idea     | click or tap empty space (spends focus)            |
+| Feed an idea      | hover it, or hold a finger on it                   |
+| Stimulate an idea | click or tap it for a burst of energy              |
+| Banish a doubt    | click or tap it                                    |
+| Read an archetype | hover its button; tap or hold it on a touch screen |
+| Change archetype  | the archetype buttons, or keys **1**–**4**         |
+| Pause             | **Esc** or **P**, or the pause button              |
+| Back to menu      | the home button, or the pause menu                 |
+| Mute / unmute     | **M**, or the speaker button                       |
+| Fullscreen        | **F**, or the pause menu                           |
+| Save a portrait   | the image button (PNG of the current mind)         |
 
 Pausing freezes the mind, its clock and its sound, and leaving the tab pauses too. The pause menu
 holds the settings: volume, sound, screen shake, full or reduced effects, a colour-blind palette,

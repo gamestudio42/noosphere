@@ -17,10 +17,12 @@ export const en = {
     plant: {
       label: 'Plant 3 ideas',
       hint: 'Click empty space to plant an idea. Planting spends focus.',
+      hintTouch: 'Tap empty space to plant an idea. Planting spends focus.',
     },
     split: {
       label: 'Help an idea divide',
       hint: 'Hover over an idea to feed it with attention until it splits.',
+      hintTouch: 'Hold a finger on an idea to feed it with attention until it splits.',
     },
     bond: {
       label: 'Let two ideas bond',
@@ -37,6 +39,7 @@ export const en = {
     banish: {
       label: 'Banish 3 doubts',
       hint: 'Click a doubt to banish it. Logic ideas slowly see through them.',
+      hintTouch: 'Tap a doubt to banish it. Logic ideas slowly see through them.',
     },
     hold: {
       label: 'Keep 20 ideas alive for 60s',
@@ -100,6 +103,7 @@ export const en = {
     doubts: 'Doubts',
     mindAge: 'Mind age',
     howTo: ['Click to plant an idea.', 'Hover to pay attention.', 'Ideas die when forgotten.'],
+    howToTouch: ['Tap to plant an idea.', 'Hold to pay attention.', 'Ideas die when forgotten.'],
     insights: 'Insights',
   },
   campaign: {

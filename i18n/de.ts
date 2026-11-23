@@ -22,10 +22,13 @@ export const de: Catalog = {
     plant: {
       label: 'Pflanze 3 Ideen',
       hint: 'Klicke auf eine freie Stelle, um eine Idee zu pflanzen. Pflanzen kostet Fokus.',
+      hintTouch: 'Tippe auf eine freie Stelle, um eine Idee zu pflanzen. Pflanzen kostet Fokus.',
     },
     split: {
       label: 'Hilf einer Idee, sich zu teilen',
       hint: 'Fahre über eine Idee, um sie mit Aufmerksamkeit zu nähren, bis sie sich teilt.',
+      hintTouch:
+        'Halte den Finger auf eine Idee, um sie mit Aufmerksamkeit zu nähren, bis sie sich teilt.',
     },
     bond: {
       label: 'Lass zwei Ideen sich verbinden',
@@ -42,6 +45,8 @@ export const de: Catalog = {
     banish: {
       label: 'Vertreibe 3 Zweifel',
       hint: 'Klicke auf einen Zweifel, um ihn zu vertreiben. Logik-Ideen durchschauen ihn nach und nach.',
+      hintTouch:
+        'Tippe auf einen Zweifel, um ihn zu vertreiben. Logik-Ideen durchschauen ihn nach und nach.',
     },
     hold: {
       label: 'Halte 20 Ideen 60 s lang am Leben',
@@ -109,6 +114,11 @@ export const de: Catalog = {
     howTo: [
       'Klicke, um eine Idee zu pflanzen.',
       'Fahre darüber, um aufmerksam zu sein.',
+      'Vergessene Ideen sterben.',
+    ],
+    howToTouch: [
+      'Tippe, um eine Idee zu pflanzen.',
+      'Halte, um aufmerksam zu sein.',
       'Vergessene Ideen sterben.',
     ],
     insights: 'Einsichten',

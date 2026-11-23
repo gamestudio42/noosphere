@@ -19,10 +19,12 @@ export const ptBR: Catalog = {
     plant: {
       label: 'Plante 3 ideias',
       hint: 'Clique num espaço vazio para plantar uma ideia. Plantar gasta foco.',
+      hintTouch: 'Toque num espaço vazio para plantar uma ideia. Plantar gasta foco.',
     },
     split: {
       label: 'Ajude uma ideia a se dividir',
       hint: 'Passe o cursor sobre uma ideia para alimentá-la com atenção até ela se dividir.',
+      hintTouch: 'Segure o dedo sobre uma ideia para alimentá-la com atenção até ela se dividir.',
     },
     bond: {
       label: 'Deixe duas ideias se ligarem',
@@ -39,6 +41,8 @@ export const ptBR: Catalog = {
     banish: {
       label: 'Afaste 3 dúvidas',
       hint: 'Clique numa dúvida para afastá-la. Ideias de Lógica aos poucos enxergam através delas.',
+      hintTouch:
+        'Toque numa dúvida para afastá-la. Ideias de Lógica aos poucos enxergam através delas.',
     },
     hold: {
       label: 'Mantenha 20 ideias vivas por 60 s',
@@ -106,6 +110,11 @@ export const ptBR: Catalog = {
     howTo: [
       'Clique para plantar uma ideia.',
       'Passe o cursor para dar atenção.',
+      'Ideias esquecidas morrem.',
+    ],
+    howToTouch: [
+      'Toque para plantar uma ideia.',
+      'Segure para dar atenção.',
       'Ideias esquecidas morrem.',
     ],
     insights: 'Descobertas',

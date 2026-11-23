@@ -42,4 +42,23 @@ describe('i18n', () => {
   it('falls back to the id for unknown entries', () => {
     expect(chapterText(CATALOGS.fr, 'nope').title).toBe('nope');
   });
+
+  it('gives every language a touch wording for plant, attention and banish', () => {
+    for (const locale of LOCALES) {
+      const t = CATALOGS[locale];
+      expect(t.hud.howToTouch).toHaveLength(t.hud.howTo.length);
+      for (const line of t.hud.howToTouch) expect(line).not.toBe('');
+      for (const id of ['plant', 'split', 'banish'] as const) {
+        expect(t.objectives[id].hintTouch).not.toBe('');
+        expect(t.objectives[id].hintTouch).not.toBe(t.objectives[id].hint);
+      }
+    }
+    const touchCopy = [
+      ...CATALOGS.en.hud.howToTouch,
+      CATALOGS.en.objectives.plant.hintTouch,
+      CATALOGS.en.objectives.split.hintTouch,
+      CATALOGS.en.objectives.banish.hintTouch,
+    ].join(' ');
+    expect(touchCopy).not.toMatch(/click|hover/i);
+  });
 });

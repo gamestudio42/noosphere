@@ -19,6 +19,11 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   retries the current chapter keeping finished objectives. `campaign.test.ts` covers chapter
   transitions and objective bookkeeping.
 - **Free Mind**: the original sandbox with every archetype, no focus cost and no doubts.
+- **Touch** (`components/useTouchInput.ts`, `utils/pointer.ts`): a coarse pointer, or a
+  device that cannot hover, reads tap and hold instead of click and hover. A short tap still
+  plants, stimulates or banishes; a held finger pays attention without that action. Tapping or
+  holding an archetype button shows the description a mouse would see on hover. The mute, camera,
+  pause and home buttons are 44px, and on a narrow screen the archetype bar sits clear of them.
 - **Presentation** (`utils/renderer.ts`): Canvas 2D drawing, trails that fade with `destination-out`,
   synapses that sway per connection, hybrid halo, PNG portrait export via `toBlob`, and `prefers-reduced-motion` respected (no trails, sway, particles or feel effects).
 - **WebGL glow** (`utils/glow.ts`, opt-in): a WebGL2 layer composites the finished 2D frame over a
@@ -64,16 +69,20 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## How it is verified
 
-- `npm run check` — TypeScript, ESLint and 59 Vitest tests across eleven files (game logic, stats,
-  focus, doubts, campaign, feel, music, settings, palette, i18n, service worker). The type check
-  runs in `strict` mode with the React types installed. Green locally and in CI.
-- `npm run build` — static build in `dist/`, green locally and in CI.
-- `npm run e2e` — four Playwright tests. Smoke: the menu renders, Free Mind starts, planting three
-  ideas raises IDEAS to at least 3 and the page logs no errors. Pause: number keys pick an
-  archetype, Esc opens the pause menu with Resume focused, mind age stands still while paused, a
-  setting is saved, and Esc resumes. Offline: the worker takes control, the network goes down, a
-  reload still plays into Free Mind with the bundled font, and the manifest has icons. Glow:
-  `?fx=glow` shows the WebGL layer exactly when WebGL2 exists, saves the setting, logs no errors.
+- `npm run check` — TypeScript, ESLint and 62 Vitest tests across twelve files (game logic, stats,
+  focus, doubts, campaign, feel, music, settings, palette, i18n, pointer, service worker). The type
+  check runs in `strict` mode with the React types installed. Green locally.
+- `npm run build` — static build in `dist/`, green locally.
+- `npm run e2e` — five Playwright tests. Smoke: the menu renders, Free Mind starts, a mouse still
+  reads click and hover, hovering Instinct reveals its description, planting three ideas raises
+  IDEAS to at least 3 and the page logs no errors. Pause: number keys pick an archetype, Esc opens
+  the pause menu with Resume focused, mind age stands still while paused, a setting is saved, and
+  Esc resumes. Offline: the worker takes control, the network goes down, a reload still plays into
+  Free Mind with the bundled font, and the manifest has icons. Glow: `?fx=glow` shows the WebGL
+  layer exactly when WebGL2 exists, saves the setting, logs no errors. Touch: a coarse pointer reads
+  tap and hold, a hold does not plant, a tap plants one idea, a long-press and a tap show archetype
+  text, and at 360×740, 412×915, 915×412, 820×1180 and 1180×820 the Instinct label stays on screen
+  and clear of the 44px tool buttons.
 - `npm run format:check` — Prettier with the studio settings (`singleQuote`, `printWidth` 100,
   `trailingComma: all`).
 - CI (`.github/workflows/pages.yml`) runs type check, lint, tests, build and e2e on every push and
