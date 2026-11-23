@@ -3,6 +3,7 @@ import { SessionStats } from '../types';
 import { INSIGHTS } from '../insights';
 import { formatDuration } from '../utils/stats';
 import { useI18n } from '../i18n';
+import { useTouchInput } from './useTouchInput';
 
 interface HudProps {
   stats: SessionStats | null;
@@ -19,7 +20,9 @@ const Stat: React.FC<{ label: string; value: React.ReactNode }> = ({ label, valu
 
 export const Hud: React.FC<HudProps> = ({ stats, unlockedCount, objectives }) => {
   const { t } = useI18n();
+  const touch = useTouchInput();
   const h = t.hud;
+  const howTo = touch ? h.howToTouch : h.howTo;
   return (
     <>
       <div className="absolute top-6 left-6 z-40 pointer-events-none">
@@ -44,7 +47,7 @@ export const Hud: React.FC<HudProps> = ({ stats, unlockedCount, objectives }) =>
       <div className="absolute top-6 right-6 z-40 pointer-events-none text-right">
         {objectives ?? (
           <p className="text-xs text-stone-500 max-w-[200px] ml-auto">
-            {h.howTo.map((line) => (
+            {howTo.map((line) => (
               <span key={line} className="block">
                 {line}
               </span>

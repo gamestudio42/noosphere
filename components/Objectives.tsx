@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { CHAPTERS, CampaignState, currentChapter, objectiveProgress } from '../campaign';
 import { SessionStats } from '../types';
 import { chapterText, objectiveText, useI18n } from '../i18n';
+import { useTouchInput } from './useTouchInput';
 
 interface ObjectivesProps {
   campaign: CampaignState;
@@ -11,6 +12,7 @@ interface ObjectivesProps {
 
 export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
   const { t } = useI18n();
+  const touch = useTouchInput();
   const chapter = currentChapter(campaign);
 
   if (!chapter) {
@@ -25,6 +27,9 @@ export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
   }
 
   const next = chapter.objectives.find((o) => !campaign.done.includes(o.id));
+  const nextHint = next ? objectiveText(t, next.id) : null;
+  const nextHintText =
+    nextHint && touch && nextHint.hintTouch ? nextHint.hintTouch : (nextHint?.hint ?? '');
 
   return (
     <div className="w-60 text-right">
@@ -60,10 +65,8 @@ export const Objectives: React.FC<ObjectivesProps> = ({ campaign, stats }) => {
           );
         })}
       </ul>
-      {next && (
-        <p className="mt-3 text-[11px] leading-snug text-cyan-100/70">
-          {objectiveText(t, next.id).hint}
-        </p>
+      {next && nextHintText && (
+        <p className="mt-3 text-[11px] leading-snug text-cyan-100/70">{nextHintText}</p>
       )}
     </div>
   );

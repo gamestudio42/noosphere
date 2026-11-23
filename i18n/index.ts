@@ -90,7 +90,10 @@ const pick = <T>(
 export const chapterText = (t: Catalog, id: string) =>
   pick<{ title: string; intro: string }>(t.chapters, en.chapters, id) ?? { title: id, intro: '' };
 export const objectiveText = (t: Catalog, id: string) =>
-  pick<{ label: string; hint: string }>(t.objectives, en.objectives, id) ?? { label: id, hint: '' };
+  pick<{ label: string; hint: string; hintTouch?: string }>(t.objectives, en.objectives, id) ?? {
+    label: id,
+    hint: '',
+  };
 export const insightText = (t: Catalog, id: string) =>
   pick<{ title: string; description: string }>(t.insights, en.insights, id) ?? {
     title: id,

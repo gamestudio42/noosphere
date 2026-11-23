@@ -38,6 +38,7 @@ import {
 } from '../utils/feel';
 import { displayHue } from '../utils/palette';
 import { createGlow, GlowRenderer } from '../utils/glow';
+import { TOUCH_TAP_SLOP, touchReleaseKind } from '../utils/pointer';
 
 interface BoardProps {
   mode: GameMode; // which saved mind to resume and write
@@ -88,6 +89,14 @@ export const Board: React.FC<BoardProps> = ({
   const requestRef = useRef<number>(0);
   const lastFrameRef = useRef<number | null>(null);
   const mouseRef = useRef<{ x: number; y: number } | null>(null);
+  // Touch has no hover. Track the finger so a short tap can still act on lift.
+  const gestureRef = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    t: number;
+    moved: boolean;
+  } | null>(null);
   const lastAudioTimeRef = useRef<number>(0);
   const sizeRef = useRef({ width: window.innerWidth, height: window.innerHeight });
   // Reduced when the system asks for less motion or the player chose reduced effects
@@ -535,13 +544,10 @@ export const Board: React.FC<BoardProps> = ({
 
   useEffect(() => () => setAudioPaused(false), []);
 
-  // Pointer events cover mouse, touch and pen without the touch→mouse double fire
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (pausedRef.current) return;
-    const cx = e.clientX;
-    const cy = e.clientY;
-    // On touch there's no hover, so holding a finger down pays attention instead
-    mouseRef.current = { x: cx, y: cy };
+  // Plant, stimulate or banish at a point. Mouse and pen call this on press.
+  // Touch calls it only for a short tap, so a held finger can pay attention
+  // the way a hover does, without also planting.
+  const actAt = (cx: number, cy: number) => {
     const archetype = archetypeRef.current;
     const usesFocus = rulesRef.current.focus;
     // Returns false (with feedback) when the mind is too tired for an action
@@ -607,9 +613,34 @@ export const Board: React.FC<BoardProps> = ({
     }
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    // Touch only "pays attention" while the finger is down
-    if (e.pointerType === 'touch' && e.buttons === 0) return;
+  // Pointer events cover mouse, touch and pen without the touch→mouse double fire
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (pausedRef.current) return;
+    const point = { x: e.clientX, y: e.clientY };
+    if (e.pointerType === 'touch') {
+      gestureRef.current = { id: e.pointerId, ...point, t: performance.now(), moved: false };
+      mouseRef.current = point;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // The pointer can end before capture; moves still update attention.
+      }
+      return;
+    }
+    mouseRef.current = point;
+    actAt(point.x, point.y);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'touch') {
+      const gesture = gestureRef.current;
+      if (!gesture || gesture.id !== e.pointerId || e.buttons === 0) return;
+      if (Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) > TOUCH_TAP_SLOP) {
+        gesture.moved = true;
+      }
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
     mouseRef.current = { x: e.clientX, y: e.clientY };
   };
 
@@ -639,9 +670,27 @@ export const Board: React.FC<BoardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glow]);
 
-  const handlePointerEnd = (e: React.PointerEvent) => {
-    if (e.type === 'pointerleave' || e.pointerType === 'touch') {
-      mouseRef.current = null;
+  const handlePointerEnd = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType !== 'touch') {
+      // A mouse hover continues after the button lifts, until the cursor leaves
+      if (e.type === 'pointerleave') mouseRef.current = null;
+      return;
+    }
+    const gesture = gestureRef.current;
+    if (gesture && gesture.id === e.pointerId) gestureRef.current = null;
+    mouseRef.current = null;
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    // Leaving or cancelling the touch never plants. A short tap does, on lift.
+    if (!gesture || gesture.id !== e.pointerId || e.type !== 'pointerup' || pausedRef.current) {
+      return;
+    }
+    const distance = gesture.moved
+      ? TOUCH_TAP_SLOP + 1
+      : Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y);
+    if (touchReleaseKind(performance.now() - gesture.t, distance) === 'tap') {
+      actAt(gesture.x, gesture.y);
     }
   };
 

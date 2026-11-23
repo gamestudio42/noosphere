@@ -22,10 +22,13 @@ export const fr: Catalog = {
     plant: {
       label: 'Plante 3 idées',
       hint: 'Clique dans le vide pour planter une idée. Planter coûte de la concentration.',
+      hintTouch: 'Touche dans le vide pour planter une idée. Planter coûte de la concentration.',
     },
     split: {
       label: 'Aide une idée à se diviser',
       hint: 'Survole une idée pour la nourrir d’attention jusqu’à ce qu’elle se divise.',
+      hintTouch:
+        'Maintiens le doigt sur une idée pour la nourrir d’attention jusqu’à ce qu’elle se divise.',
     },
     bond: {
       label: 'Laisse deux idées se lier',
@@ -42,6 +45,7 @@ export const fr: Catalog = {
     banish: {
       label: 'Chasse 3 doutes',
       hint: 'Clique sur un doute pour le chasser. Les idées de Logique finissent par le dissiper.',
+      hintTouch: 'Touche un doute pour le chasser. Les idées de Logique finissent par le dissiper.',
     },
     hold: {
       label: 'Garde 20 idées en vie pendant 60 s',
@@ -109,6 +113,11 @@ export const fr: Catalog = {
     howTo: [
       'Clique pour planter une idée.',
       'Survole pour prêter attention.',
+      'Les idées oubliées meurent.',
+    ],
+    howToTouch: [
+      'Touche pour planter une idée.',
+      'Maintiens pour prêter attention.',
       'Les idées oubliées meurent.',
     ],
     insights: 'Révélations',
