@@ -11,6 +11,7 @@ import { FocusBar } from './components/FocusBar';
 import { MainMenu } from './components/MainMenu';
 import { PauseMenu } from './components/PauseMenu';
 import { Settings, loadSettings, saveSettings } from './utils/settings';
+import { glowEnabled } from './utils/glow';
 import {
   CATALOGS,
   I18nContext,
@@ -256,7 +257,7 @@ const App: React.FC = () => {
           paused={paused}
           shake={settings.shake}
           reducedEffects={settings.effects === 'reduced'}
-          glow={settings.glow}
+          glow={glowEnabled(settings.glow)}
           canvasRef={canvasRef}
         />
 

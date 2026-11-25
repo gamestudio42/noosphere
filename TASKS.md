@@ -7,8 +7,8 @@
 
 ## NEXT
 
-- Judge the WebGL glow prototype (`?fx=glow`); if approved, measure it on a real GPU and make it the
-  default. Particles still come from the 2D renderer (ROADMAP phase 2).
+- Measure the glow on a discrete GPU and on a real 4K screen (only the Intel iGPU was measured).
+  Particles still come from the 2D renderer (ROADMAP phase 2).
 - Native-speaker review of the Spanish, French and German catalogs in `i18n/`.
 - Fixed simulation timestep (ROADMAP phase 4).
 - Playtest the campaign with people: the balance numbers come from a scripted player only.

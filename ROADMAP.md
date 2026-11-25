@@ -29,7 +29,8 @@ cohesive, and a game that holds attention, not just a toy.
 ## Phase 2: visuals and game feel
 
 - [ ] WebGL renderer (PixiJS or custom shaders) with bloom, layered neural background and thousands of particles.
-      Prototype in: WebGL2 bloom and background over the 2D scene, opt-in (`?fx=glow`) until approved.
+      In: WebGL2 bloom and background over the 2D scene, on by default on hardware GPUs. Particles still
+      come from the 2D renderer.
 - [x] Hybrid birth as a hero moment: brief slow motion, shockwave, subtle zoom.
 - [ ] A shape per archetype as well as a colour. Tried and reverted; colour blindness is covered
       by the opt-in colour-blind palette instead.

@@ -5,6 +5,8 @@
 import type { PaletteName } from './palette';
 
 export type Effects = 'full' | 'reduced';
+// auto: on when WebGL2 runs on a hardware GPU, off in software rendering
+export type GlowMode = 'auto' | 'on' | 'off';
 
 export interface Settings {
   volume: number; // 0..1, applied on top of the mix
@@ -12,7 +14,7 @@ export interface Settings {
   shake: boolean; // screen shake on hits, births and denied actions
   effects: Effects; // reduced: no trails, particles, ripples or slow motion
   palette: PaletteName; // colourblind: archetype hues that stay apart for every colour vision
-  glow: boolean; // WebGL bloom and living background (falls back to the 2D canvas)
+  glow: GlowMode; // WebGL bloom and living background (falls back to the 2D canvas)
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,7 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   shake: true,
   effects: 'full',
   palette: 'default',
-  glow: false,
+  glow: 'auto',
 };
 
 const KEY = 'noosphere:settings:v1';
@@ -29,6 +31,15 @@ const KEY = 'noosphere:settings:v1';
 const LEGACY_MUTE_KEY = 'noosphere:muted';
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+// Saves from the opt-in prototype stored a boolean. Off was the default then, not
+// a choice, so it becomes auto; on was chosen, so it stays on.
+const sanitizeGlow = (raw: unknown): GlowMode =>
+  raw === 'auto' || raw === 'on' || raw === 'off'
+    ? raw
+    : raw === true
+      ? 'on'
+      : DEFAULT_SETTINGS.glow;
 
 // Keeps only well-formed values, so a hand-edited or older save can't break the game
 export const sanitizeSettings = (raw: unknown): Settings => {
@@ -43,15 +54,15 @@ export const sanitizeSettings = (raw: unknown): Settings => {
     effects: r.effects === 'reduced' || r.effects === 'full' ? r.effects : DEFAULT_SETTINGS.effects,
     palette:
       r.palette === 'default' || r.palette === 'colourblind' ? r.palette : DEFAULT_SETTINGS.palette,
-    glow: typeof r.glow === 'boolean' ? r.glow : DEFAULT_SETTINGS.glow,
+    glow: sanitizeGlow(r.glow),
   };
 };
 
-// ?fx=glow or ?fx=flat switches the WebGL glow and remembers the choice
-const fxFromQuery = (): boolean | null => {
+// ?fx=glow, ?fx=flat or ?fx=auto switches the WebGL glow and remembers the choice
+const fxFromQuery = (): GlowMode | null => {
   try {
     const fx = new URLSearchParams(window.location.search).get('fx');
-    return fx === 'glow' ? true : fx === 'flat' ? false : null;
+    return fx === 'glow' ? 'on' : fx === 'flat' ? 'off' : fx === 'auto' ? 'auto' : null;
   } catch {
     return null;
   }
