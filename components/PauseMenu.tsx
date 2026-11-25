@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Settings } from '../utils/settings';
+import { glowEnabled } from '../utils/glow';
 import { LOCALES, LOCALE_NAMES, isLocale, useI18n } from '../i18n';
 
 interface PauseMenuProps {
@@ -126,8 +127,8 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({
           <Toggle
             label={p.glow}
             hint={p.glowHint}
-            checked={settings.glow}
-            onChange={(on) => set('glow', on)}
+            checked={glowEnabled(settings.glow)}
+            onChange={(on) => set('glow', on ? 'on' : 'off')}
           />
           {canFullscreen && (
             <Toggle

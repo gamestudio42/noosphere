@@ -26,10 +26,14 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   pause and home buttons are 44px, and on a narrow screen the archetype bar sits clear of them.
 - **Presentation** (`utils/renderer.ts`): Canvas 2D drawing, trails that fade with `destination-out`,
   synapses that sway per connection, hybrid halo, PNG portrait export via `toBlob`, and `prefers-reduced-motion` respected (no trails, sway, particles or feel effects).
-- **WebGL glow** (`utils/glow.ts`, opt-in): a WebGL2 layer composites the finished 2D frame over a
-  dim, drifting neural background and adds bloom from a five-level dual-filter blur. Off by default
-  while it is reviewed: Glow (WebGL) in the pause menu, or `?fx=glow`. Without WebGL2, or after a
-  lost context, the 2D canvas shows as before.
+- **WebGL glow** (`utils/glow.ts`): a WebGL2 layer composites the finished 2D frame over a
+  dim, drifting neural background and adds bloom from a five-level dual-filter blur. On by default
+  when WebGL2 runs on a hardware GPU; off in software rendering (SwiftShader, llvmpipe), where it
+  costs several frames' budget. Glow (WebGL) in the pause menu, or `?fx=glow` / `?fx=flat` /
+  `?fx=auto`, overrides it. Above 2560×1440 the layer renders at that size and CSS scales it up.
+  Without WebGL2, or after a lost context, the 2D canvas shows as before. Measured on the Intel
+  integrated GPU (Chromium could not reach the RTX 4050): 2.75 ms a frame at 1080p, 4.6 ms at
+  1440p; at 60 Hz with a full mind it dropped no more frames than the flat canvas.
 - **Game feel** (`utils/feel.ts`): ripples on plant, stimulate, banish and denied actions;
   trauma-based screen shake; every hybrid birth sends a shockwave, and a blend wider than any before
   slows time to a quarter with a slight zoom that eases back over 0.9 s.
@@ -79,7 +83,8 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
   the pause menu with Resume focused, mind age stands still while paused, a setting is saved, and
   Esc resumes. Offline: the worker takes control, the network goes down, a reload still plays into
   Free Mind with the bundled font, and the manifest has icons. Glow: `?fx=glow` shows the WebGL
-  layer exactly when WebGL2 exists, saves the setting, logs no errors. Touch: a coarse pointer reads
+  layer exactly when WebGL2 exists and saves the setting; by default it shows only on a hardware
+  GPU (off in headless SwiftShader); no errors either way. Touch: a coarse pointer reads
   tap and hold, a hold does not plant, a tap plants one idea, a long-press and a tap show archetype
   text, and at 360×740, 412×915, 915×412, 820×1180 and 1180×820 the Instinct label stays on screen
   and clear of the 44px tool buttons.
@@ -102,8 +107,7 @@ overview is the [README](../README.md); open work is tracked in [TASKS.md](../TA
 
 ## What is missing
 
-See [ROADMAP.md](../ROADMAP.md). The honest short list: the WebGL glow judged and made the default
-(its cost was only measured in software rendering, about 130 ms a frame in headless SwiftShader
-against 17 ms flat, so it needs a GPU measurement first), a fixed
+See [ROADMAP.md](../ROADMAP.md). The honest short list: the glow measured on a discrete GPU
+and a 4K screen (only the Intel integrated GPU was measured), a fixed
 simulation timestep, touch tested on real phones, and translations reviewed by native speakers
 (the four non-English catalogs were written without one). GPU cost of the renderer has not been measured on real hardware.

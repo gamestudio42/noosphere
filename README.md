@@ -96,10 +96,10 @@ portrait.
 Clicks answer with ripples and a little shake, and a hybrid carrying more archetypes than any
 before it slows time for a beat. The mind plays music: every note is in A minor pentatonic, bonds
 and births fall on a slow pulse, and a score of heartbeat, arpeggio and tension follows how big, how
-mixed and how threatened the mind is. An optional WebGL glow (`?fx=glow`, or Glow in the pause menu) adds bloom and a living
-background. It speaks English, Portuguese, Spanish, French and German,
+mixed and how threatened the mind is. On a hardware GPU a WebGL glow adds bloom and a living
+background (Glow in the pause menu, or `?fx=flat`, turns it off). It speaks English, Portuguese, Spanish, French and German,
 offers a colour-blind palette, and installs from the browser to play offline. Still open in the
-[roadmap](ROADMAP.md): making the glow the default and a fixed simulation timestep.
+[roadmap](ROADMAP.md): a fixed simulation timestep.
 
 What is implemented, how it was verified and what is knowingly missing is in the
 [project status](docs/STATUS.md); open work is in [TASKS.md](TASKS.md).

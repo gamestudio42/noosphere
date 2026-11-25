@@ -24,7 +24,7 @@ describe('settings', () => {
         shake: false,
         effects: 'reduced',
         palette: 'colourblind',
-        glow: true,
+        glow: 'on',
       }),
     ).toEqual({
       volume: 1,
@@ -32,8 +32,14 @@ describe('settings', () => {
       shake: false,
       effects: 'reduced',
       palette: 'colourblind',
-      glow: true,
+      glow: 'on',
     });
     expect(sanitizeSettings({ volume: -1 }).volume).toBe(0);
+  });
+
+  it('moves saves from the opt-in glow prototype to the new modes', () => {
+    expect(sanitizeSettings({ glow: false }).glow).toBe('auto');
+    expect(sanitizeSettings({ glow: true }).glow).toBe('on');
+    expect(sanitizeSettings({ glow: 'off' }).glow).toBe('off');
   });
 });

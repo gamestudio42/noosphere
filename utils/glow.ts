@@ -133,6 +133,41 @@ export interface GlowRenderer {
 }
 
 const LEVELS = 5;
+// Past about 1440p the glow layer renders smaller and the browser scales it up.
+// On a 4K screen the integrated GPU spent 9.6 ms a frame at full size.
+const MAX_GLOW_PIXELS = 2560 * 1440;
+
+// Software WebGL (SwiftShader, llvmpipe and friends) runs the glow at several
+// times the frame budget, so the automatic setting leaves it off there.
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|lavapipe|software|basic render driver/i;
+
+let hardwareGlow: boolean | null = null;
+
+/** Whether this browser has WebGL2 on a hardware GPU. Checked once, then cached. */
+export const hasHardwareGlow = (): boolean => {
+  if (hardwareGlow !== null) return hardwareGlow;
+  hardwareGlow = false;
+  try {
+    const probe = document.createElement('canvas');
+    // Browsers refuse this flag when WebGL would run in software
+    const gl = probe.getContext('webgl2', { failIfMajorPerformanceCaveat: true });
+    if (gl) {
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      const renderer = String(
+        gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '',
+      );
+      hardwareGlow = !SOFTWARE_RENDERER.test(renderer);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    }
+  } catch {
+    // No WebGL2 at all: the 2D canvas is the whole picture
+  }
+  return hardwareGlow;
+};
+
+/** Whether the glow should run for this setting on this machine. */
+export const glowEnabled = (mode: 'auto' | 'on' | 'off'): boolean =>
+  mode === 'on' || (mode === 'auto' && hasHardwareGlow());
 
 export const createGlow = (canvas: HTMLCanvasElement): GlowRenderer | null => {
   const gl = canvas.getContext('webgl2', {
@@ -212,6 +247,10 @@ export const createGlow = (canvas: HTMLCanvasElement): GlowRenderer | null => {
   };
 
   const resize = (width: number, height: number) => {
+    // Larger screens get a scaled-down glow layer, stretched back by CSS
+    const scale = Math.min(1, Math.sqrt(MAX_GLOW_PIXELS / Math.max(1, width * height)));
+    width = Math.max(1, Math.round(width * scale));
+    height = Math.max(1, Math.round(height * scale));
     canvas.width = width;
     canvas.height = height;
     for (const t of chain) {
