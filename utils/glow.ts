@@ -248,6 +248,9 @@ export const createGlow = (canvas: HTMLCanvasElement): GlowRenderer | null => {
     // The 2D canvas is transparent over the page background: keep it premultiplied
     bind(0, scene);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    // Canvas rows start at the top, texture rows at the bottom: without the flip
+    // the scene shows upside down and ideas appear mirrored from the click
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
 
     // Bright parts, down the chain, then back up adding each level

@@ -22,3 +22,45 @@ test('the WebGL glow turns on from ?fx=glow, or falls back to the flat canvas', 
   expect(JSON.parse(saved ?? '{}').glow).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('the glow shows an idea where it was planted, not mirrored', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/?fx=glow');
+  test.skip(
+    !(await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'))),
+    'no WebGL2',
+  );
+  await page.getByRole('button', { name: /FREE MIND/i }).click();
+  await page.waitForTimeout(500);
+  await page.mouse.click(250, 600);
+  await page.mouse.move(1100, 300);
+  await page.waitForTimeout(500);
+
+  // Copy the glow layer inside a frame, before the browser discards its buffer.
+  // The idea drifts after birth, so look for the brightest pixel in the lower
+  // left (where it was planted) and in the upper left (where a flip puts it).
+  const peaks = await page.evaluate(
+    () =>
+      new Promise<{ planted: number; mirrored: number }>((resolve) => {
+        requestAnimationFrame(() => {
+          const glow = document.querySelector<HTMLCanvasElement>('canvas[aria-hidden="true"]')!;
+          const copy = document.createElement('canvas');
+          copy.width = glow.width;
+          copy.height = glow.height;
+          const ctx = copy.getContext('2d')!;
+          ctx.drawImage(glow, 0, 0);
+          const sx = glow.width / window.innerWidth;
+          const sy = glow.height / window.innerHeight;
+          const peak = (y0: number, y1: number) => {
+            const d = ctx.getImageData(0, y0 * sy, 500 * sx, (y1 - y0) * sy).data;
+            let best = 0;
+            for (let i = 0; i < d.length; i += 4) best = Math.max(best, d[i] + d[i + 1] + d[i + 2]);
+            return best;
+          };
+          resolve({ planted: peak(400, 720), mirrored: peak(0, 320) });
+        });
+      }),
+  );
+  expect(peaks.planted).toBeGreaterThan(450);
+  expect(peaks.mirrored).toBeLessThan(300);
+});
