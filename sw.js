@@ -1,7 +1,7 @@
 // Generated at build time by pwa/serviceWorker.ts. Do not edit.
 const PREFIX = 'noosphere:' + self.registration.scope + ':';
-const CACHE = PREFIX + "6523409683d9";
-const FILES = ["./","./index.html","./assets/space-grotesk-latin-300-normal-DiSf0yqz.woff2","./assets/space-grotesk-latin-400-normal-CJ-V5oYT.woff2","./assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2","./assets/space-grotesk-latin-300-normal-Byd1NLsn.woff","./assets/space-grotesk-latin-400-normal-BnQMeOim.woff","./assets/space-grotesk-latin-700-normal-CwsQ-cCU.woff","./assets/index-DKiiBTDt.css","./assets/index-9JiCN5Fz.js","./apple-touch-icon.png","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./icon.svg","./manifest.webmanifest"];
+const CACHE = PREFIX + "d4a406d26e64";
+const FILES = ["./","./index.html","./assets/space-grotesk-latin-300-normal-DiSf0yqz.woff2","./assets/space-grotesk-latin-400-normal-CJ-V5oYT.woff2","./assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2","./assets/space-grotesk-latin-300-normal-Byd1NLsn.woff","./assets/space-grotesk-latin-400-normal-BnQMeOim.woff","./assets/space-grotesk-latin-700-normal-CwsQ-cCU.woff","./assets/index-DKiiBTDt.css","./assets/index-3xaHw1p-.js","./apple-touch-icon.png","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./icon.svg","./manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
